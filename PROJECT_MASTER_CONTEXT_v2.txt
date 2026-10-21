@@ -1,0 +1,478 @@
+================================================================
+PROJECT MASTER CONTEXT: SAANJHA
+Self-contained product, academic, technical, and AI working context
+================================================================
+
+HOW TO USE THIS FILE
+
+- This file is the main context source for future AI sessions.
+- Treat [LOCKED] decisions as fixed unless the user explicitly changes them.
+- Treat [CURRENT] as implemented and checked in the present codebase.
+- Treat [PLANNED] as intended work that must not be described as complete.
+- Treat [FLEXIBLE] as open to improvement.
+- Treat [RISK] as a concern that should be discussed honestly.
+- Use simple, student-like English. Avoid inflated marketing language.
+- Do not invent measurements, user research, experiment results, or deployment claims.
+- The academic synopsis should use future tense until a feature is genuinely implemented and verified.
+
+----------------------------------------------------------------
+1. PROJECT IDENTITY [LOCKED]
+----------------------------------------------------------------
+
+Name: Saanjha
+Meaning: shared/common in Hindi/Punjabi.
+
+Approved tagline:
+"What if your campus never let anything go to waste - not a used cycle,
+not a spare textbook, not any accessory still worth using."
+
+Project type: campus-only peer-to-peer reuse platform.
+Academic setting: Exploratory Project, B.E. Computer Science.
+Primary academic deliverables: synopsis, mid-term presentation with working software, final report/demo, and Coursera component.
+
+Saanjha helps students list useful items they no longer need and helps other students discover, reserve, and collect those items through safe in-person campus handovers.
+
+----------------------------------------------------------------
+2. PROBLEM AND HUMAN NEED
+----------------------------------------------------------------
+
+Current campus resale often happens through WhatsApp groups or informal conversations. Those channels have predictable problems:
+
+- Posts reach only a limited group and disappear quickly.
+- Listings cannot be searched or filtered properly.
+- Seller identity is difficult to verify.
+- Item condition, price, and pickup arrangements are unclear.
+- Several buyers may claim the same item.
+- Handover has no reliable completion record.
+- Useful items remain unused even when another student needs them.
+
+This is a team observation, not measured user research. The project must describe it as an observed problem, not as a statistically proven fact.
+
+### User psychology
+
+Students are likely to use Saanjha repeatedly when it feels:
+
+- Faster than searching through chat groups.
+- More trustworthy than an unknown informal seller.
+- Affordable and relevant to campus life.
+- Clear about condition, price, pickup, and reservation status.
+- Safe without being complicated.
+- Useful for both buying and selling, not only one direction.
+
+Important trust signals:
+
+- Campus email restriction.
+- OTP verification for student login.
+- Admin approval before public discovery.
+- Seller ownership and listing history.
+- One active buyer reservation at a time.
+- Expiry and automatic release.
+- Handover code entered by the seller after the physical exchange.
+- Contact details revealed only after reservation.
+
+----------------------------------------------------------------
+3. PRODUCT SCOPE [LOCKED]
+----------------------------------------------------------------
+
+Saanjha is resale-only. Students from any year may buy or sell.
+
+### Supported item categories
+
+- Books
+- Cycles
+- Electronics and accessories
+- Furniture
+- Sportswear and sports equipment
+
+A controlled "Other" category may be added only if it is useful for the campus version.
+
+### Listing information
+
+A listing can contain:
+
+- Title
+- Description
+- Price, including zero for free/giveaway items
+- Category
+- Condition
+- At least two images
+- Optional video stored through Cloudinary in a later media phase
+- Campus pickup point
+- Book branch and semester when the category is Books
+- Seller identity shown at the appropriate privacy level
+
+There is currently no product-policy maximum image count. The upload system may still use a protective technical ceiling to prevent abuse. Videos should be limited to 80 MB and 90 seconds and should display a short accepted-format note in the upload interface.
+
+### Campus identity
+
+- Registration accepts only an email ending with `@university.edu.in`.
+- Student ID is optional.
+- Campus-specific values should be environment-configurable:
+
+```env
+CAMPUS_NAME=Example University
+CAMPUS_EMAIL_DOMAIN=university.edu.in
+```
+
+Each campus can run its own configured version with adjusted campus name, email domain, pickup points, and suitable wording.
+
+### Explicit exclusions
+
+Do not add these to Saanjha unless the user changes the product direction:
+
+- Food ordering
+- Food or business vendors
+- Shopping carts
+- Online payments or payment gateways
+- Payment gateway dependencies, refunds, or payment webhooks
+- Delivery workflows
+- Vendor storefronts
+- Vendor commissions
+- Generic commercial marketplace features unrelated to campus reuse
+
+Cash or UPI may happen physically at handover, but Saanjha does not process or store online payments.
+
+----------------------------------------------------------------
+4. CORE USER JOURNEY
+----------------------------------------------------------------
+
+```text
+Student registers with an @university.edu.in email
+  -> student logs in through password plus OTP
+  -> student submits a listing with at least two images
+  -> admin approves or rejects the listing
+  -> approved listing appears in search
+  -> buyer opens the listing and sees general availability
+  -> buyer reserves the item
+  -> system creates an expiry time and a four-digit handover code
+  -> exact pickup point and contact details become available
+  -> buyer and seller meet on campus
+  -> buyer presents the code
+  -> seller enters the code after the exchange
+  -> listing becomes sold
+  -> item journey records the completed handover
+```
+
+### Reservation rules [LOCKED]
+
+- First successful reservation wins.
+- A buyer may have only one active reservation at a time.
+- The buyer must complete or release the current transaction before reserving another item.
+- Sellers choose from preset durations: 3, 6, 12, 24, 36, 54, 72, or 96 hours.
+- Default duration: 54 hours.
+- The duration control may use a restrained watch-crown-like sliding interaction.
+- On expiry, the listing becomes available again and the previous buyer is notified.
+- Sellers may cancel according to their availability; the buyer must be notified and the event recorded.
+- The system sends the handover code to the buyer. The seller enters it in the system after the physical transaction.
+- The seller does not need to authenticate the buyer again at the physical handover beyond the active reservation and code flow.
+- The exact pickup point and contact details remain hidden from public listing viewers and are revealed after reservation.
+
+### Listing editing rules [LOCKED]
+
+The following changes require admin approval again:
+
+- Title
+- Category
+- Condition
+- Image replacement
+
+A small description correction may remain live without fresh approval. A listing that needs approval again should leave public discovery while pending.
+
+Price, pickup-point, and book-detail edit behavior is currently flexible and should be kept simple until the first working reservation flow is stable.
+
+----------------------------------------------------------------
+5. CURRENT IMPLEMENTED STATUS [CURRENT]
+----------------------------------------------------------------
+
+The current code is an independent Saanjha foundation and evaluator shell. It is not yet the complete product described above.
+
+### Backend currently implemented
+
+- Express server with `/api` routes.
+- MongoDB/Mongoose connection target.
+- Development MongoDB Memory Server fallback.
+- Student and admin roles.
+- Password hashing with bcrypt.
+- JWT token generation and authentication middleware.
+- Campus email validation during student registration.
+- Optional student ID.
+- Student password login followed by OTP verification.
+- Direct admin email/password login for evaluator demonstration.
+- OTP generation using cryptographic random values.
+- OTP hashing, expiry, email delivery configuration, and development fallback.
+- Automatic first-admin seeding from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- Listing schema with title, description, price, category, condition, seller, images, pickup point, book details, status, approval, tags, and timestamps.
+- Text/category/condition listing indexes.
+- Approved listing discovery.
+- Listing detail endpoint.
+- Student listing submission endpoint.
+- At least two image validation during listing submission.
+- Student-owned listing retrieval endpoint.
+- Admin pending-listing retrieval.
+- Admin approve/reject listing endpoints.
+- Admin user listing and active-status toggle.
+- Upload validation through Multer.
+
+### Frontend currently implemented
+
+- Independent React/Vite application shell.
+- Saanjha visual identity and responsive layout.
+- Approved-listing browsing screen.
+- Client-side listing search filtering.
+- API proxy to backend port 3101.
+- Frontend development port 5174.
+- Clear placeholder messaging when the backend is unavailable.
+
+### Working page plan [PLANNED]
+
+The practical target is 9 core pages/views plus 1 optional view. A page may be a route or a section inside a dashboard if that keeps the evaluator demo simple.
+
+1. Browse Listings - first screen for approved items, search, categories, conditions, and prices.
+2. Listing Detail - full item information, media, seller trust information, availability, and reserve action.
+3. Student Login - campus email/password entry and OTP start.
+4. Student Registration - identity and optional student ID fields.
+5. OTP Verification - enter the emailed code.
+6. Create/Edit Listing - item fields, book details, pickup point, and at least two images.
+7. My Activity - listings, reservation state, expiry, cancellation, and completed handovers.
+8. Reservation and Handover - duration selection, buyer code, contact/pickup reveal, and completion.
+9. Admin Moderation - pending listings, approval/rejection, reports, and user controls.
+10. Wanted Board - optional; add only after the core nine are reliable.
+
+Only Browse Listings currently exists as a working frontend shell. The remaining pages are planned and must not be presented as implemented.
+
+### Current default administrator
+
+Configured through private environment variables:
+
+```env
+ADMIN_EMAIL=admin@university.edu.in
+ADMIN_PASSWORD=<private local value>
+```
+
+The real development value belongs only in the ignored local team context and `backend/.env`. It must be changed before deployment.
+
+----------------------------------------------------------------
+6. NOT YET IMPLEMENTED [PLANNED]
+----------------------------------------------------------------
+
+These are the next product modules, not current features:
+
+1. Full student registration/login/OTP screens in the frontend.
+2. Listing creation/editing form in the frontend.
+3. Cloudinary upload through the backend.
+4. Video upload with 80 MB and 90-second validation.
+5. Admin moderation screens in the frontend.
+6. Reservation model and atomic first-come-first-served reservation endpoint.
+7. Preset duration control with 54-hour default.
+8. Expiry worker or scheduled release process.
+9. Buyer notification after expiry or seller cancellation.
+10. Four-digit handover code generation and seller confirmation.
+11. Item journey/status history.
+12. Contact and exact pickup-point visibility after reservation.
+13. Listing edit approval rules.
+14. User reports and admin review flow.
+15. Wanted Board and matching notifications.
+16. Campus-word search normalization and synonym behavior.
+17. Concurrency experiment scripts.
+18. Search-quality experiment scripts.
+19. Automated backend and frontend tests.
+20. Deployment, CI, accessibility audit, and performance hardening.
+
+Do not describe these features as working in a synopsis or presentation until they are implemented and tested.
+
+----------------------------------------------------------------
+7. TARGET ARCHITECTURE
+----------------------------------------------------------------
+
+```text
+React/Vite frontend
+  -> listing browse, auth, forms, moderation, reservation, handover UI
+  -> Express REST API under /api
+  -> JWT and role middleware
+  -> Mongoose models and validation
+  -> MongoDB Atlas per campus
+  -> backend media handling -> Cloudinary
+  -> SMTP OTP and notification service
+```
+
+### Current source layout
+
+```text
+Saanjha/
+├── PROJECT_MASTER_CONTEXT_v2.txt  # this file
+├── README.md                      # setup and current status
+├── backend/
+│   ├── models/                    # User, Listing
+│   ├── routes/                    # auth, listings, admin
+│   ├── middleware/                # auth, upload
+│   ├── services/                  # OTP
+│   └── server.js
+└── frontend/
+    ├── src/App.jsx               # current listing shell
+    ├── src/main.jsx              # frontend bootstrap
+    ├── src/index.css              # current visual system
+    ├── package.json
+    └── vite.config.js
+```
+
+### Target models
+
+- User
+- Listing
+- Reservation
+- PickupPoint or campus configuration
+- ItemJourney
+- Report
+- WantedRequest
+
+Reservation and ItemJourney must be designed separately. A listing status field alone is not sufficient to prevent double booking, represent expiry, or explain the item's history.
+
+### Target API groups
+
+- `/api/auth` - registration, login, OTP, profile.
+- `/api/listings` - browse, detail, create, edit, approval, and seller listings.
+- `/api/reservations` - reserve, cancel, expire, and handover confirmation.
+- `/api/admin` - moderation, reports, user activation, and oversight.
+- `/api/reports` - submit and review reports.
+- `/api/wanted` - wanted requests and matching notifications.
+
+----------------------------------------------------------------
+8. TECHNICAL DECISIONS [LOCKED OR CURRENT]
+----------------------------------------------------------------
+
+- Backend: Node.js and Express.
+- Frontend: React and Vite.
+- Database: MongoDB Atlas with Mongoose.
+- Authentication: JWT, bcrypt, and OTP email.
+- File validation: Multer at the backend boundary.
+- Media target: Cloudinary through the backend.
+- Frontend port: 5174.
+- Backend port: 3101.
+- API prefix: `/api`.
+- Admin login: direct password login for the evaluator demo.
+- Student login: password plus OTP.
+- No online payment dependency.
+
+MUI is a possible UI component layer for the full application. The current shell intentionally uses a small custom CSS system to avoid unnecessary dependencies before the complete screens are designed.
+
+----------------------------------------------------------------
+9. EXPLORATORY EXPERIMENTS
+----------------------------------------------------------------
+
+### E1: Reservation concurrency
+
+Question: when multiple students reserve one item at the same time, which implementation prevents double booking?
+
+Compare only the approaches needed for a meaningful result:
+
+- A: check then save, as a deliberately weak baseline.
+- B: one atomic `findOneAndUpdate` operation.
+- C: multi-document transaction only if item status and journey history require it.
+
+Measure:
+
+- Double reservations.
+- Requests that incorrectly receive no reservation.
+- Response time.
+- Write conflicts or retries when relevant.
+
+Initial target levels may be 10, 25, and 50 concurrent requests. Use 100 only if the local environment can support it. Results are indicative, not proof of universal performance.
+
+### E2: Campus-word search
+
+Question: does simple campus synonym expansion and text cleanup improve search compared with plain MongoDB text search?
+
+Possible examples: cycle/bicycle/bike, textbook/book, headset/headphones.
+
+Use team-created listings and held-out queries. Measure precision@5, recall@10, and query-level wins/losses. State clearly that a small synthetic dataset produces indications, not general proof.
+
+Do not write expected outcomes as measured results. Negative or surprising results are valid.
+
+----------------------------------------------------------------
+10. ACADEMIC PLAN AND SYNOPSIS
+----------------------------------------------------------------
+
+Academic format:
+
+- Title page
+- Contents
+- Abstract
+- Introduction
+- Methodology
+- Tools and Technologies
+- Project Plan
+
+Formatting target:
+
+- Times New Roman
+- Headings 16 pt bold
+- Subheadings 14 pt bold
+- Body 12 pt
+- 1.5 line spacing
+
+The synopsis must use simple future-oriented language while the product is under development. Numeric values are targets until experiments produce results.
+
+Suggested eight-week plan:
+
+- Week 1: environment, architecture, ER/DFD, wireframes, test setup.
+- Week 2: campus authentication and listing foundation.
+- Week 3: admin approval, search, and listing detail.
+- Week 4: reservation and handover prototype; mid-term presentation.
+- Week 5: reservation concurrency experiment.
+- Week 6: campus-word search and optional Wanted Board.
+- Week 7: search experiment, polish, testing, feature freeze.
+- Week 8: deployment preparation, final report, and demo.
+
+The Wanted Board is the first feature to reduce if the reservation journey or experiments fall behind.
+
+----------------------------------------------------------------
+11. RISKS AND CRITICAL NOTES
+----------------------------------------------------------------
+
+- A four-digit code is a convenience mechanism, not strong identity security. It must be tied to an active reservation and expiry.
+- OTP does not prove student identity unless the campus email domain and email delivery are enforced.
+- A seller-selected expiry can create confusion if options are too flexible; preset values and a clear default are better.
+- One active reservation per buyer is simple for the demo but may need reconsideration for real campus use.
+- MongoDB supports atomic single-document updates and transactions, but transaction conflicts require measurement and possibly retries.
+- Atlas free tier performance is constrained; timing results should not be generalized.
+- Synthetic experiment data cannot prove actual student behavior.
+- Cloudinary limits, file validation, and backend upload security must be tested before media is called production-ready.
+- The current frontend is a shell. Backend routes should not be presented as complete user-facing workflows.
+- Automated tests should be added before the reservation experiment, not after the final presentation.
+
+----------------------------------------------------------------
+12. NEXT WORK ORDER
+----------------------------------------------------------------
+
+1. Add campus configuration and complete student/admin auth screens.
+2. Add listing creation/editing UI and backend media validation.
+3. Add Cloudinary backend upload integration.
+4. Add admin moderation UI.
+5. Design Reservation and ItemJourney schemas.
+6. Implement atomic reservation and one-active-reservation rule.
+7. Implement expiry, notification, cancellation, and handover code.
+8. Add item history and privacy-controlled contact/pickup visibility.
+9. Add focused tests for reservation correctness.
+10. Build E1 concurrency measurement.
+11. Improve visual polish and accessibility.
+12. Add campus-word search and E2 evaluation.
+13. Add Wanted Board only after the core flow is reliable.
+
+----------------------------------------------------------------
+13. RULES FOR FUTURE AI SESSIONS
+----------------------------------------------------------------
+
+- Read this file and README.md before changing architecture or scope.
+- Check the actual source before claiming a feature is implemented.
+- Keep Saanjha resale-only and campus-focused.
+- Do not add food, vendors, carts, online payments, or delivery features.
+- Ask questions when a product rule is unclear instead of silently deciding.
+- Prefer the smallest working feature that supports the evaluator demo.
+- Prioritize runnable and executable behavior over perfect architecture. Use simple, practical solutions that can be completed on time; defer nonessential refactoring, abstraction, and polish until after the evaluator demo.
+- Keep current behavior and planned behavior visibly separate in documentation.
+- Use strong validation and tests for reservation state changes.
+- Preserve student privacy before reservation.
+- Do not invent experiment results or user research.
+- Keep academic documents simple, human, and honest.
+- Validate frontend build, frontend lint, backend syntax, and relevant behavior after edits.
+================================================================
