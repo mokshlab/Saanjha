@@ -49,13 +49,16 @@ async function ensureAdmin() {
   console.log('Seeded the initial Saanjha administrator');
 }
 
-connectDatabase().catch((error) => {
+async function startServer() {
+  await connectDatabase();
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Saanjha API listening on http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch((error) => {
   console.error('Database startup failed:', error.message);
   process.exitCode = 1;
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Saanjha API listening on http://localhost:${PORT}`);
 });
 
 process.on('SIGINT', async () => {
