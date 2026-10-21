@@ -249,7 +249,7 @@ ADMIN_EMAIL=admin@university.edu.in
 ADMIN_PASSWORD=<private local value>
 ```
 
-The real development value belongs only in the ignored local team context and `backend/.env`. It must be changed before deployment.
+The real development value belongs only in the ignored local team context and `.local/.env`. It must be changed before deployment.
 
 ----------------------------------------------------------------
 6. NOT YET IMPLEMENTED [PLANNED]

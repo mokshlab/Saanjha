@@ -1,18 +1,26 @@
-import { defineConfig } from 'vite'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0', // Bind to all network interfaces
-    port: 5174,
-    cors: true,
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:3101',
-        changeOrigin: true,
-        secure: false
+const localEnvDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.local')
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, localEnvDirectory, 'VITE_')
+
+  return {
+    envDir: localEnvDirectory,
+    plugins: [react()],
+    server: {
+      host: '0.0.0.0',
+      port: Number(env.VITE_FRONTEND_PORT || 5174),
+      cors: true,
+      proxy: {
+        '/api': {
+          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:3101',
+          changeOrigin: true,
+          secure: false
+        }
       }
     }
   }

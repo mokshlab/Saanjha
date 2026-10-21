@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const User = require('./models/User');
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.local', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3101;
