@@ -9,4 +9,4 @@ npm install
 npm run dev
 ```
 
-The Vite development server uses port `5174` and expects the Saanjha API at `http://127.0.0.1:3101` through the proxy configuration.
+The Vite development server and API proxy read their values from the root `.local/.env` file. Set `VITE_FRONTEND_PORT`, `VITE_BACKEND_URL`, and `VITE_API_BASE_URL` there before starting the frontend.

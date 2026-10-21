@@ -34,9 +34,9 @@ cd ../frontend
 npm install
 ```
 
-Create `backend/.env` from `backend/.env.example`, provide a unique `JWT_SECRET`, and set the campus email domain to `university.edu.in`. Add Cloudinary credentials when media upload implementation begins. MongoDB Atlas is the target database; the in-memory fallback is only for the initial local shell.
+Create `.local/.env` from the local template, provide a unique `JWT_SECRET`, and set the campus email domain to `university.edu.in`. Backend and frontend environment values are loaded from this file only. Add Cloudinary credentials there when media upload implementation begins. MongoDB Atlas is the target database; the in-memory fallback is only for the initial local shell.
 
-The first administrator is created automatically when no admin exists. Set private local values in `backend/.env`:
+The first administrator is created automatically when no admin exists. Set private local values in `.local/.env`:
 
 ```env
 ADMIN_EMAIL=your_admin@university.edu.in
