@@ -29,8 +29,8 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 | MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
-| RES-03 | Add expiry and cancellation notifications | API | BACKLOG | Expired/cancelled listing reopens and buyer is notified |
-| HAND-01 | Add buyer code and seller confirmation | API/UI | BACKLOG | Successful code entry marks listing sold and records handover |
+| RES-03 | Add expiry and cancellation notifications | API | REVIEW | Expired/cancelled listing reopens and buyer is notified |
+| HAND-01 | Add buyer code and seller confirmation | API/UI | REVIEW | Successful code entry marks listing sold and records handover |
 | TEST-01 | Add core reservation tests | EXP | BACKLOG | Duplicate reservation and expiry cases are tested |
 | EXP-01 | Run reservation concurrency experiment | EXP | BACKLOG | Raw results and limitations are recorded |
 | EXP-02 | Add campus-word search comparison | EXP | BACKLOG | Held-out queries produce transparent metrics |
