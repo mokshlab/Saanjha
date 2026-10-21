@@ -27,8 +27,8 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 | LIST-01 | Build listing creation and edit form | UI | BACKLOG | At least two images, categories, books fields, and zero price work |
 | LIST-02 | Add Cloudinary backend media upload | API | BACKLOG | Backend validates and stores accepted media safely |
 | MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings |
-| RES-01 | Design Reservation and ItemJourney models | API | BACKLOG | Schema supports one active reservation, expiry, and history |
-| RES-02 | Implement atomic first-come-first-served reservation | API | BACKLOG | Concurrent attempts produce at most one winner |
+| RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
+| RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
 | RES-03 | Add expiry and cancellation notifications | API | BACKLOG | Expired/cancelled listing reopens and buyer is notified |
 | HAND-01 | Add buyer code and seller confirmation | API/UI | BACKLOG | Successful code entry marks listing sold and records handover |
 | TEST-01 | Add core reservation tests | EXP | BACKLOG | Duplicate reservation and expiry cases are tested |
