@@ -206,6 +206,7 @@ The current code is an independent Saanjha foundation and evaluator shell. It is
 - Approved listing discovery.
 - Listing detail endpoint.
 - Student listing submission endpoint.
+- Student-owned listing edit endpoint with approval re-entry for title, category, condition, and image replacement.
 - At least two image validation during listing submission.
 - Student-owned listing retrieval endpoint.
 - Admin pending-listing retrieval.
@@ -269,7 +270,7 @@ These are the next product modules, not current features:
 10. Four-digit handover code generation and seller confirmation.
 11. Item journey/status history.
 12. Contact and exact pickup-point visibility after reservation.
-13. Listing edit approval rules.
+13. Full frontend listing edit flow and connected approval messaging.
 14. User reports and admin review flow.
 15. Wanted Board and matching notifications.
 16. Campus-word search normalization and synonym behavior.
@@ -476,3 +477,57 @@ The Wanted Board is the first feature to reduce if the reservation journey or ex
 - Keep academic documents simple, human, and honest.
 - Validate frontend build, frontend lint, backend syntax, and relevant behavior after edits.
 ================================================================
+
+----------------------------------------------------------------
+14. AI TEAM DELIVERY RULES
+----------------------------------------------------------------
+
+These rules apply to every future AI session working with the team.
+
+### Teammate milestone reporting
+
+- At the end of a teammate's mid-term work, report the teammate, task IDs, files changed, proving commands, manual checks, and remaining gaps.
+- A teammate's work is not called complete only because code exists or a build passes.
+- Use `REVIEW` while another teammate must inspect it and `HUMAN VERIFICATION PENDING` until the owner confirms the connected workflow.
+- Say explicitly when the mid-term scope is ready for evaluation and which optional work is intentionally deferred.
+
+### Honest Git progress
+
+- Keep commits small and meaningful. One commit should represent one coherent task or verified milestone.
+- Recommend pushing after a real milestone is implemented and checked, not after silently accumulating several days of work.
+- Use actual author and committer dates. Never invent dates, split one large change into fake historical activity, or make GitHub activity misleading.
+- Before any push, show the staged file list and confirm that secrets, local context, dependencies, builds, uploads, and unrelated pending work are excluded.
+- Never push pending feature work merely because another branch needs documentation. Push only the files approved for that milestone.
+
+### Demo and satisfaction gate
+
+For every implemented feature, AI must:
+
+1. State the user workflow and expected result.
+2. Run the narrowest automated check available.
+3. Run the application and guide the owner through the real workflow when the environment allows it.
+4. Report pass, failure, or blocked status immediately with evidence.
+5. Ask the owning teammate to confirm whether the workflow is satisfactory before moving the task to `DONE`.
+
+AI must not claim that a teammate is satisfied. It must ask and record the teammate's confirmation or concern.
+
+### Four-day mid-term readiness plan
+
+This plan starts today, 22 October, and prioritizes a small working demo over optional features.
+
+| Date | M - Backend/Data | N - Frontend/UX | H - Tests/Integration |
+|---|---|---|---|
+| 22 Oct | Stabilize auth, listing, reservation, expiry, and handover contracts; run focused tests. | Connect the current browse shell to real API states and start auth/listing screens. | Create clean demo data, API smoke checks, and a blocker list. |
+| 23 Oct | Finish data consistency, edit-approval, notification, and privacy rules. | Complete the listing form and the smallest login, reservation, and handover states. | Run connected register/list/approve/search/reserve checks and capture failures. |
+| 24 Oct | Fix only defects found in the connected workflow; do not start optional architecture. | Add admin moderation and the minimum buyer/seller activity view. | Run the full evaluator path and verify mobile/desktop basics. |
+| 25 Oct | Freeze backend behavior and review demo seed/configuration. | Polish the evaluator path and remove misleading placeholders. | Rehearse the five-minute demo, update task statuses, and prepare evidence. |
+
+At the end of each day, update the task board with the proving command and owner's verification state. If the core register/list/approve/search/reserve/handover path is not stable, defer Cloudinary, Wanted Board, and search experiments.
+
+### Practical improvement priorities
+
+1. Make the evaluator path a tested vertical slice before adding optional pages.
+2. Add safe seed/demo data and a health check that reports database and email readiness without exposing secrets.
+3. Keep exact pickup points and contact details hidden until an active reservation is confirmed.
+4. Add focused tests for duplicate reservation, expiry, cancellation, invalid handover code, and approval re-entry.
+5. Rotate local database, SMTP, and admin credentials before public deployment, keeping them only in `.local/.env`.

@@ -25,13 +25,14 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 |---|---|---|---|---|
 | AUTH-01 | Build student registration/login/OTP screens | UI/API | BACKLOG | Campus email validation and OTP flow work end to end |
 | LIST-01 | Build listing creation and edit form | UI | BACKLOG | At least two images, categories, books fields, and zero price work |
+| LIST-03 | Add listing edit approval rules | API | REVIEW | Sensitive edits leave discovery until admin approval |
 | LIST-02 | Add Cloudinary backend media upload | API | BACKLOG | Backend validates and stores accepted media safely |
 | MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
 | RES-03 | Add expiry and cancellation notifications | API | REVIEW | Expired/cancelled listing reopens and buyer is notified |
 | HAND-01 | Add buyer code and seller confirmation | API/UI | REVIEW | Successful code entry marks listing sold and records handover |
-| TEST-01 | Add core reservation tests | EXP | BACKLOG | Duplicate reservation and expiry cases are tested |
+| TEST-01 | Add core reservation tests | EXP | REVIEW | Core listing, reservation, and handover invariants are tested |
 | EXP-01 | Run reservation concurrency experiment | EXP | BACKLOG | Raw results and limitations are recorded |
 | EXP-02 | Add campus-word search comparison | EXP | BACKLOG | Held-out queries produce transparent metrics |
 | WANT-01 | Build Wanted Board | UI/API | BACKLOG | Only start after reservation flow is reliable |
@@ -47,3 +48,22 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 - Do not mark a backend route `DONE` until the connected user workflow is verified.
 - Keep the current demo path more important than optional polish.
 - M, N, and H may work on any area when coordinated; the named owner remains responsible for final integration and verification.
+
+## Mid-term Delivery Rules
+
+- AI reports each teammate's milestone with task IDs, changed files, proving commands, manual checks, and remaining gaps.
+- A feature stays `REVIEW` or `HUMAN VERIFICATION PENDING` until the owner confirms the connected workflow. AI must not claim teammate satisfaction.
+- Keep commits small and truthful. Push a verified milestone soon after it is complete instead of combining many days of work or inventing dates.
+- Before a push, review the staged file list and exclude secrets, `.local/`, dependencies, builds, uploads, and unrelated pending work.
+- Every feature demo must state the expected user result, run its narrowest automated check, run the real workflow where possible, and record pass/fail/blocker evidence.
+
+## Four-day Mid-term Plan
+
+| Date | M - Backend/Data | N - Frontend/UX | H - Tests/Integration |
+|---|---|---|---|
+| 22 Oct | Stabilize auth, listing, reservation, expiry, and handover contracts. | Start auth and listing screens around the current browse shell. | Prepare clean demo data, API smoke checks, and a blocker list. |
+| 23 Oct | Finish data consistency, edit approval, notifications, and privacy rules. | Complete the smallest login, listing, reservation, and handover states. | Run register/list/approve/search/reserve checks and record failures. |
+| 24 Oct | Fix connected-workflow defects only and avoid optional architecture. | Add admin moderation and the minimum activity view. | Run the full evaluator path and verify mobile/desktop basics. |
+| 25 Oct | Freeze backend behavior and review demo configuration. | Polish the evaluator path and remove misleading placeholders. | Rehearse the five-minute demo and prepare evidence for the report. |
+
+Defer Cloudinary, Wanted Board, and search experiments if the core evaluator path is unstable.
