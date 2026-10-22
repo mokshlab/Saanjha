@@ -15,6 +15,7 @@ const listingSchema = new mongoose.Schema({
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   approvedAt: Date,
   tags: [{ type: String, trim: true }],
+  reservedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   reservedUntil: Date,
   soldAt: Date
 }, { timestamps: true });
