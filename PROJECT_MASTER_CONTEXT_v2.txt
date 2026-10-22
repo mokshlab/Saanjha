@@ -213,6 +213,8 @@ The current code is an independent Saanjha foundation and evaluator shell. It is
 - Admin approve/reject listing endpoints.
 - Admin user listing and active-status toggle.
 - Upload validation through Multer.
+- Optional Cloudinary image storage through the backend, with local fallback when Cloudinary credentials are blank.
+- Reservation concurrency runner that reports raw outcomes without inventing measurements.
 
 ### Frontend currently implemented
 
@@ -495,6 +497,8 @@ These rules apply to every future AI session working with the team.
 
 - Keep commits small and meaningful. One commit should represent one coherent task or verified milestone.
 - Recommend pushing after a real milestone is implemented and checked, not after silently accumulating several days of work.
+- When a dated push is requested, ask the user for the exact date, time, timezone, commit scope, and branch before creating history. Do not choose or infer those values.
+- Use short, human-written commit messages in simple English unless the user supplies a different message.
 - Use actual author and committer dates. Never invent dates, split one large change into fake historical activity, or make GitHub activity misleading.
 - Before any push, show the staged file list and confirm that secrets, local context, dependencies, builds, uploads, and unrelated pending work are excluded.
 - Never push pending feature work merely because another branch needs documentation. Push only the files approved for that milestone.
@@ -523,6 +527,8 @@ This plan starts today, 22 October, and prioritizes a small working demo over op
 | 25 Oct | Freeze backend behavior and review demo seed/configuration. | Polish the evaluator path and remove misleading placeholders. | Rehearse the five-minute demo, update task statuses, and prepare evidence. |
 
 At the end of each day, update the task board with the proving command and owner's verification state. If the core register/list/approve/search/reserve/handover path is not stable, defer Cloudinary, Wanted Board, and search experiments.
+
+Each day's deliverable must name the exact files or endpoint, the command that proves it, the manual workflow owner, and whether the result is pushed or local-only. A feature is ready for mid-term demonstration only after the owner confirms the connected workflow.
 
 ### Practical improvement priorities
 

@@ -25,15 +25,15 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 |---|---|---|---|---|
 | AUTH-01 | Build student registration/login/OTP screens | UI/API | BACKLOG | Campus email validation and OTP flow work end to end |
 | LIST-01 | Build listing creation and edit form | UI | BACKLOG | At least two images, categories, books fields, and zero price work |
-| LIST-03 | Add listing edit approval rules | API | REVIEW | Sensitive edits leave discovery until admin approval |
-| LIST-02 | Add Cloudinary backend media upload | API | BACKLOG | Backend validates and stores accepted media safely |
+| LIST-03 | Add listing edit approval rules | API | BACKLOG | Sensitive edits leave discovery until admin approval |
+| LIST-02 | Add Cloudinary backend media upload | API | BACKLOG | Configured Cloudinary stores accepted media; blank credentials use the local fallback |
 | MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
 | RES-03 | Add expiry and cancellation notifications | API | REVIEW | Expired/cancelled listing reopens and buyer is notified |
 | HAND-01 | Add buyer code and seller confirmation | API/UI | REVIEW | Successful code entry marks listing sold and records handover |
-| TEST-01 | Add core reservation tests | EXP | REVIEW | Core listing, reservation, and handover invariants are tested |
-| EXP-01 | Run reservation concurrency experiment | EXP | BACKLOG | Raw results and limitations are recorded |
+| TEST-01 | Add core reservation tests | EXP | BACKLOG | Core listing, reservation, and handover invariants are tested |
+| EXP-01 | Run reservation concurrency experiment | EXP | BACKLOG | Runner reports raw status counts and winner count for supplied tokens |
 | EXP-02 | Add campus-word search comparison | EXP | BACKLOG | Held-out queries produce transparent metrics |
 | WANT-01 | Build Wanted Board | UI/API | BACKLOG | Only start after reservation flow is reliable |
 | DEMO-01 | Prepare five-day evaluator demo script | EXP | BACKLOG | Register/list/approve/search/reserve/handover path is rehearsed |
@@ -56,6 +56,7 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 - Keep commits small and truthful. Push a verified milestone soon after it is complete instead of combining many days of work or inventing dates.
 - Before a push, review the staged file list and exclude secrets, `.local/`, dependencies, builds, uploads, and unrelated pending work.
 - Every feature demo must state the expected user result, run its narrowest automated check, run the real workflow where possible, and record pass/fail/blocker evidence.
+- When a dated push is requested, ask for the exact date, time, timezone, branch, files, and short commit message. Never infer or fabricate a timeline.
 
 ## Four-day Mid-term Plan
 
@@ -67,3 +68,9 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 | 25 Oct | Freeze backend behavior and review demo configuration. | Polish the evaluator path and remove misleading placeholders. | Rehearse the five-minute demo and prepare evidence for the report. |
 
 Defer Cloudinary, Wanted Board, and search experiments if the core evaluator path is unstable.
+
+## Pushed Scope Check
+
+The current `origin/moksh` branch contains the reservation models, atomic reservation endpoint, expiry/cancellation/handover implementation, notifications, and database-readiness fix. These remain `REVIEW` until owner verification.
+
+The listing-edit rules, Cloudinary integration, concurrency runner, and backend test files are local-only work and remain `BACKLOG` until deliberately reviewed and pushed.
