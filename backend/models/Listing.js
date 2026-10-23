@@ -6,7 +6,10 @@ const listingSchema = new mongoose.Schema({
   price: { type: Number, required: true, min: 0 },
   category: { type: String, required: true, enum: ['books', 'cycles', 'electronics', 'accessories', 'furniture', 'clothing', 'sports', 'stationery', 'other'] },
   condition: { type: String, required: true, enum: ['new', 'like-new', 'good', 'fair', 'poor'] },
-  images: [{ type: String }],
+  images: {
+    type: [{ type: String }],
+    validate: { validator: (images) => images.length >= 2, message: 'At least two images are required' }
+  },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   pickupPoint: { type: String, required: true, trim: true },
   bookDetails: { branch: String, semester: String },
