@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import './index.css';
 import { useNavigate } from 'react-router-dom';
+import SustainabilitySection from './components/SustainabilitySection';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -453,7 +454,7 @@ if (listingStatus !== 'approved') {
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#browse">Explore</a>
           <a href="#how-it-works">How it works</a>
-
+<a href="#about-saanjha">About Us</a>
           <button
             type="button"
             className="nav-cta"
@@ -954,7 +955,7 @@ if (listingStatus !== 'approved') {
           </article>
         </div>
       </section>
-
+  <SustainabilitySection />
       <footer className="site-footer">
         <a className="brand footer-brand" href="#home">
           <span className="brand-mark">S</span>
