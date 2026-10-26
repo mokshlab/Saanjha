@@ -8,10 +8,11 @@ import MyReservations from './pages/MyReservations';
 import MyListings from './pages/MyListings';
 import AdminModeration from './pages/AdminModeration';
 import ProfilePage from './pages/ProfilePage';
+import { isAuthenticated } from './api';
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
-  const isLoggedIn = localStorage.getItem('saanjhaLoggedIn') === 'true';
+  const isLoggedIn = isAuthenticated();
 
   if (!isLoggedIn) {
     return (
