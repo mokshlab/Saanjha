@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const STORAGE_KEY = 'saanjhaUserListings';
+const USER_EMAIL_KEY = 'saanjhaLoggedInEmail';
 
 const categories = [
   'Cycles',
@@ -10,6 +11,12 @@ const categories = [
   'Electronics',
   'Accessories',
 ];
+
+function getCurrentUserEmail() {
+  return (
+    localStorage.getItem(USER_EMAIL_KEY) || ''
+  ).trim().toLowerCase();
+}
 
 function getSavedListings() {
   try {
@@ -35,8 +42,25 @@ function MyListings() {
   });
   const [message, setMessage] = useState('');
 
+  function refreshMyListings() {
+    const currentEmail = getCurrentUserEmail();
+
+    if (!currentEmail) {
+      setListings([]);
+      return;
+    }
+
+    const myListings = getSavedListings().filter(
+      (item) =>
+        (item.ownerEmail || '').trim().toLowerCase() ===
+        currentEmail
+    );
+
+    setListings(myListings);
+  }
+
   useEffect(() => {
-    setListings(getSavedListings());
+    refreshMyListings();
   }, []);
 
   function saveListings(updatedListings) {
@@ -46,7 +70,7 @@ function MyListings() {
         JSON.stringify(updatedListings)
       );
 
-      setListings(updatedListings);
+      refreshMyListings();
       return true;
     } catch {
       setMessage(
@@ -57,6 +81,11 @@ function MyListings() {
   }
 
   function startEditing(item) {
+    if (!isOwnedByCurrentUser(item)) {
+      setMessage('You can only edit your own listings.');
+      return;
+    }
+
     setEditingId(item._id);
 
     setForm({
@@ -94,6 +123,16 @@ function MyListings() {
     }));
   }
 
+  function isOwnedByCurrentUser(item) {
+    const currentEmail = getCurrentUserEmail();
+
+    return Boolean(
+      currentEmail &&
+      item.ownerEmail &&
+      item.ownerEmail.trim().toLowerCase() === currentEmail
+    );
+  }
+
   function handleUpdate(event) {
     event.preventDefault();
 
@@ -101,6 +140,11 @@ function MyListings() {
     const pickupPoint = form.pickupPoint.trim();
     const description = form.description.trim();
     const price = Number(form.price);
+
+    if (!getCurrentUserEmail()) {
+      setMessage('Please log in to edit your listing.');
+      return;
+    }
 
     if (
       !title ||
@@ -117,20 +161,21 @@ function MyListings() {
 
     const currentListings = getSavedListings();
 
-    const exists = currentListings.some(
+    const itemToEdit = currentListings.find(
       (item) => item._id === editingId
     );
 
-    if (!exists) {
+    if (!itemToEdit || !isOwnedByCurrentUser(itemToEdit)) {
       setMessage(
-        'This listing could not be found in saved listings. Refresh the page and try again.'
+        'You cannot edit this listing because it does not belong to your account.'
       );
-      setListings(currentListings);
+      cancelEditing();
+      refreshMyListings();
       return;
     }
 
     const updatedListings = currentListings.map((item) =>
-      item._id === editingId
+      item._id === editingId && isOwnedByCurrentUser(item)
         ? {
             ...item,
             title,
@@ -144,7 +189,7 @@ function MyListings() {
 
     if (saveListings(updatedListings)) {
       setEditingId(null);
-      setMessage('✓ Listing updated successfully!');
+      setMessage('Listing updated successfully!');
 
       setForm({
         title: '',
@@ -157,6 +202,16 @@ function MyListings() {
   }
 
   function handleDelete(item) {
+    if (!getCurrentUserEmail()) {
+      setMessage('Please log in to delete a listing.');
+      return;
+    }
+
+    if (!isOwnedByCurrentUser(item)) {
+      setMessage('You can only delete your own listings.');
+      return;
+    }
+
     const confirmed = window.confirm(
       `Are you sure you want to delete "${item.title || 'this listing'}"? This cannot be undone.`
     );
@@ -165,15 +220,25 @@ function MyListings() {
 
     const currentListings = getSavedListings();
 
-    const updatedListings = currentListings.filter(
-      (savedItem) => savedItem._id !== item._id
+    const exists = currentListings.some(
+      (savedItem) =>
+        savedItem._id === item._id &&
+        isOwnedByCurrentUser(savedItem)
     );
 
-    if (updatedListings.length === currentListings.length) {
-      setMessage('Listing not found in saved listings.');
-      setListings(currentListings);
+    if (!exists) {
+      setMessage('Listing not found or you do not own it.');
+      refreshMyListings();
       return;
     }
+
+    const updatedListings = currentListings.filter(
+      (savedItem) =>
+        !(
+          savedItem._id === item._id &&
+          isOwnedByCurrentUser(savedItem)
+        )
+    );
 
     if (saveListings(updatedListings)) {
       if (editingId === item._id) {
@@ -222,7 +287,8 @@ function MyListings() {
             onSubmit={handleUpdate}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '16px',
             }}
           >
@@ -336,7 +402,8 @@ function MyListings() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '22px',
             marginTop: '28px',
           }}
@@ -403,10 +470,12 @@ function MyListings() {
                   <strong>Pickup:</strong>{' '}
                   {item.pickupPoint || 'Not specified'}
                 </p>
-<p>
-  <strong>Status:</strong>{' '}
-  {item.status || 'Approved'}
-</p>
+
+                <p>
+                  <strong>Status:</strong>{' '}
+                  {item.status || 'Approved'}
+                </p>
+
                 <div
                   style={{
                     display: 'flex',
