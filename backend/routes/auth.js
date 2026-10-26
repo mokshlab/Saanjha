@@ -21,7 +21,19 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Email or student ID is already registered' });
     }
     const user = await User.create({ name, email, password, phone, college, studentId, role: 'student' });
-    res.status(201).json({ message: 'Student registered successfully', token: generateToken(user._id), user });
+    const { code, expiresAt } = generateOtp();
+    user.otpCodeHash = await hashOtp(code);
+    user.otpExpiresAt = expiresAt;
+    user.otpLastSentAt = new Date();
+    await user.save();
+    const delivery = await sendOtpEmail(user.email, code);
+    res.status(201).json({
+      message: 'Student registered. Verification code sent.',
+      otpRequired: true,
+      email: user.email,
+      devFallback: !!delivery.fallbackLogged,
+      expiresAt
+    });
   } catch (error) {
     res.status(error.name === 'ValidationError' ? 400 : 500).json({ message: error.message || 'Registration failed' });
   }

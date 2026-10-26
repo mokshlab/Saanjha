@@ -5,12 +5,14 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const User = require('./models/User');
+const reservationRoutes = require('./routes/reservations');
 
 dotenv.config({ path: path.join(__dirname, '..', '.local', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3101;
 let memoryServer = null;
+let reservationExpiryTimer = null;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -19,6 +21,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
+app.use('/api/reservations', reservationRoutes);
 app.use('/api/admin', require('./routes/admin'));
 
 app.get('/', (req, res) => res.json({ message: 'Saanjha API is running' }));
@@ -33,6 +36,11 @@ async function connectDatabase() {
     await mongoose.connect(memoryServer.getUri('saanjha'));
   }
   await ensureAdmin();
+  await reservationRoutes.expireReservations();
+  reservationExpiryTimer = setInterval(() => reservationRoutes.expireReservations().catch((error) => {
+    console.error('Reservation expiry failed:', error.message);
+  }), 60 * 1000);
+  reservationExpiryTimer.unref();
 }
 
 async function ensureAdmin() {
@@ -61,6 +69,7 @@ startServer().catch((error) => {
 });
 
 process.on('SIGINT', async () => {
+  if (reservationExpiryTimer) clearInterval(reservationExpiryTimer);
   await mongoose.disconnect();
   if (memoryServer) await memoryServer.stop();
   process.exit(0);

@@ -76,8 +76,14 @@ async function sendOtpEmail(to, code) {
     return { success: true, fallbackLogged: true };
   }
 
-  await transport.sendMail({ from, to, subject, text, html });
-  return { success: true };
+  try {
+    await transport.sendMail({ from, to, subject, text, html });
+    return { success: true };
+  } catch (error) {
+    console.warn(`OTP email delivery failed for ${to}: ${error.message}`);
+    console.log(`OTP for ${to}: ${code} (development fallback after delivery failure)`);
+    return { success: true, fallbackLogged: true, deliveryError: error.message };
+  }
 }
 
 module.exports = {
