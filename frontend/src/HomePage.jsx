@@ -1,15 +1,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
 import './index.css';
 import { useNavigate } from 'react-router-dom';
 import SustainabilitySection from './components/SustainabilitySection';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-});
-
-const STORAGE_KEY = 'saanjhaUserListings';
+import api, { clearSession, isAuthenticated } from './api';
 
 const demoListings = [
   {
@@ -94,36 +88,6 @@ const categories = [
   'Accessories',
 ];
 
-const categoryEmojis = {
-  Cycles: '🚲',
-  Books: '📚',
-  Electronics: '🎧',
-  Accessories: '🎒',
-};
-
-function getSavedListings() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || '[]'
-    );
-
-    return Array.isArray(saved) ? saved : [];
-  } catch {
-    return [];
-  }
-}
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Could not read image.'));
-
-    reader.readAsDataURL(file);
-  });
-}
-
 function HomePage() {
   const [loggedInName, setLoggedInName] = useState(() => {
   return localStorage.getItem('saanjhaLoggedIn') === 'true'
@@ -145,8 +109,8 @@ function HomePage() {
   const [formMessage, setFormMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [imageError, setImageError] = useState('');
   const imageInputRef = useRef(null);
 
@@ -158,19 +122,17 @@ function HomePage() {
       .then((response) => {
         if (!active) return;
 
-        const savedListings = getSavedListings();
         const serverListings = Array.isArray(response.data.items)
           ? response.data.items
           : [];
 
-        // Keep local listings and server listings available.
-        setListings([...savedListings, ...serverListings]);
+        setListings(serverListings);
         setStatus('');
       })
       .catch(() => {
         if (!active) return;
 
-        setListings([...getSavedListings(), ...demoListings]);
+        setListings(demoListings);
         setUsingDemo(true);
         setStatus('');
       });
@@ -181,16 +143,16 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedImage) {
-      setImagePreview('');
+    if (!selectedImages.length) {
+      setImagePreviews([]);
       return undefined;
     }
 
-    const previewUrl = URL.createObjectURL(selectedImage);
-    setImagePreview(previewUrl);
+    const previewUrls = selectedImages.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previewUrls);
 
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [selectedImage]);
+    return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [selectedImages]);
 
   const filteredListings = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -301,34 +263,40 @@ if (listingStatus !== 'approved') {
   }
 
   function handleImageChange(event) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
 
     setImageError('');
     setFormMessage('');
 
-    if (!file) return;
+    if (!files.length) return;
 
-    if (!file.type.startsWith('image/')) {
-      setSelectedImage(null);
+    if (files.some((file) => !file.type.startsWith('image/'))) {
+      setSelectedImages([]);
       setImageError('Please choose a valid image file.');
       event.target.value = '';
       return;
     }
 
-    if (file.size > 1024 * 1024) {
-      setSelectedImage(null);
+    if (files.some((file) => file.size > 5 * 1024 * 1024)) {
+      setSelectedImages([]);
       setImageError(
-        'For this browser-only version, please choose an image of 1 MB or less.'
+        'Each image must be 5 MB or smaller.'
       );
       event.target.value = '';
       return;
     }
 
-    setSelectedImage(file);
+    if (files.length < 2) {
+      setSelectedImages(files);
+      setImageError('Choose at least two images for a listing.');
+      return;
+    }
+
+    setSelectedImages(files);
   }
 
   function removeSelectedImage() {
-    setSelectedImage(null);
+    setSelectedImages([]);
     setImageError('');
 
     if (imageInputRef.current) {
@@ -350,7 +318,8 @@ if (listingStatus !== 'approved') {
       const formData = new FormData(form);
 
       const title = String(formData.get('title') || '').trim();
-      const itemCategory = String(formData.get('category') || 'Books');
+      const itemCategory = String(formData.get('category') || 'books').toLowerCase();
+      const condition = String(formData.get('condition') || 'good').toLowerCase();
       const price = Number(formData.get('price'));
       const pickupPoint = String(
         formData.get('pickupPoint') || ''
@@ -364,69 +333,44 @@ if (listingStatus !== 'approved') {
         !pickupPoint ||
         !description ||
         !Number.isFinite(price) ||
-        price < 0
+        price < 0 ||
+        !isAuthenticated()
       ) {
         setFormMessage(
-          'Please enter all required details and a valid price.'
+          isAuthenticated()
+            ? 'Please enter all required details and a valid price.'
+            : 'Please log in before publishing a listing.'
         );
         return;
       }
 
-      let images = [];
-
-      if (selectedImage) {
-        const imageData = await fileToDataUrl(selectedImage);
-        images = [imageData];
+      if (selectedImages.length < 2) {
+        setImageError('Choose at least two images for a listing.');
+        return;
       }
 
-      const newListing = {
-        _id: `local-${Date.now()}`,
-        ownerEmail: (
-  localStorage.getItem('saanjhaLoggedInEmail') || ''
-).trim().toLowerCase(),
-        title,
-        category: itemCategory,
-        price,
-        pickupPoint,
-        description,
-        emoji: categoryEmojis[itemCategory] || '📦',
-        images,
-        status: 'Pending',
-        createdAt: new Date().toISOString(),
-      };
-
-      const savedListings = getSavedListings();
-      const updatedSavedListings = [newListing, ...savedListings];
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(updatedSavedListings)
-      );
-
-      setListings((previous) => [newListing, ...previous]);
+      formData.set('category', itemCategory);
+      formData.set('condition', condition);
+      await api.post('/listings', formData);
 
       // Reset search, price filters and sorting so the new item is visible.
       clearFilters();
 
       form.reset();
-      setSelectedImage(null);
+      setSelectedImages([]);
 
       if (imageInputRef.current) {
         imageInputRef.current.value = '';
       }
 
-      setFormMessage(
-        'Your listing has been submitted for admin review.'
-      );
+      setFormMessage('Your listing has been submitted for admin review.');
 
       document.getElementById('browse')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
       });
-    } catch {
-      setFormMessage(
-        'Could not save your listing. Browser storage may be full. Try a smaller image or remove the photo.'
-      );
+    } catch (error) {
+      setFormMessage(error.response?.data?.message || 'Could not submit the listing.');
     } finally {
       setSubmitting(false);
     }
@@ -482,8 +426,7 @@ if (listingStatus !== 'approved') {
       type="button"
       className="nav-cta"
       onClick={() => {
-        localStorage.removeItem('saanjhaLoggedIn');
-        localStorage.removeItem('saanjhaLoggedInEmail');
+        clearSession();
         setLoggedInName('');
         navigate('/');
       }}
@@ -793,8 +736,7 @@ if (listingStatus !== 'approved') {
           <h2 id="form-title">Give your item a new home</h2>
 
           <p className="form-note">
-            Add your item below. In this version, it will be saved in this
-            browser.
+            Add your item below. Listings are submitted for admin review.
           </p>
 
           <form className="listing-form" onSubmit={handleListingSubmit}>
@@ -818,6 +760,17 @@ if (listingStatus !== 'approved') {
                       {item}
                     </option>
                   ))}
+              </select>
+            </label>
+
+            <label>
+              Condition
+              <select name="condition" defaultValue="good">
+                <option value="new">New</option>
+                <option value="like-new">Like new</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
               </select>
             </label>
 
@@ -857,24 +810,25 @@ if (listingStatus !== 'approved') {
 
             <div className="form-wide image-upload-field">
               <label htmlFor="item-image" className="upload-heading">
-                Product photo <span>(optional)</span>
+                Product photos <span>(at least 2 required)</span>
               </label>
 
               <label htmlFor="item-image" className="image-upload-box">
                 <span className="upload-icon">📸</span>
                 <strong>
-                  {selectedImage
-                    ? 'Choose another photo'
-                    : 'Click to upload a photo'}
+                  {selectedImages.length
+                    ? `${selectedImages.length} photos selected`
+                    : 'Click to upload photos'}
                 </strong>
-                <span>JPG, PNG, WEBP · Maximum 1 MB</span>
+                <span>JPG, PNG, WEBP · Maximum 5 MB each</span>
 
                 <input
                   ref={imageInputRef}
                   id="item-image"
-                  name="image"
+                  name="images"
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageChange}
                   className="image-file-input"
                 />
@@ -886,29 +840,23 @@ if (listingStatus !== 'approved') {
                 </p>
               )}
 
-              {imagePreview && (
+              {imagePreviews.length > 0 && (
                 <div className="image-preview">
-                  <img
-                    src={imagePreview}
-                    alt="Preview of your selected product"
-                  />
+                  {imagePreviews.map((preview, index) => (
+                    <img
+                      key={preview}
+                      src={preview}
+                      alt={`Selected product photo ${index + 1}`}
+                    />
+                  ))}
 
-                  <div className="image-preview-details">
-                    <span className="preview-success">
-                      ✓ Photo ready
-                    </span>
-                    <span className="preview-filename">
-                      {selectedImage?.name}
-                    </span>
-
-                    <button
-                      type="button"
-                      className="remove-image-button"
-                      onClick={removeSelectedImage}
-                    >
-                      ✕ Remove photo
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="remove-image-button"
+                    onClick={removeSelectedImage}
+                  >
+                    ✕ Remove photos
+                  </button>
                 </div>
               )}
             </div>

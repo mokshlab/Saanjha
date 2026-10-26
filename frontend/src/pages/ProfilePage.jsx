@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { clearSession } from '../api';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function ProfilePage() {
     );
 
     if (confirmed) {
+      clearSession();
       navigate('/login');
     }
   }

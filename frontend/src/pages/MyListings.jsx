@@ -1,34 +1,17 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-const STORAGE_KEY = 'saanjhaUserListings';
-const USER_EMAIL_KEY = 'saanjhaLoggedInEmail';
+import api, { isAuthenticated } from '../api';
 
 const categories = [
-  'Cycles',
-  'Books',
-  'Electronics',
-  'Accessories',
+  { label: 'Cycles', value: 'cycles' },
+  { label: 'Books', value: 'books' },
+  { label: 'Electronics', value: 'electronics' },
+  { label: 'Accessories', value: 'accessories' },
+  { label: 'Furniture', value: 'furniture' },
+  { label: 'Sports', value: 'sports' },
+  { label: 'Other', value: 'other' },
 ];
-
-function getCurrentUserEmail() {
-  return (
-    localStorage.getItem(USER_EMAIL_KEY) || ''
-  ).trim().toLowerCase();
-}
-
-function getSavedListings() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || '[]'
-    );
-
-    return Array.isArray(saved) ? saved : [];
-  } catch {
-    return [];
-  }
-}
 
 function MyListings() {
   const [listings, setListings] = useState([]);
@@ -42,57 +25,30 @@ function MyListings() {
   });
   const [message, setMessage] = useState('');
 
-  function refreshMyListings() {
-    const currentEmail = getCurrentUserEmail();
-
-    if (!currentEmail) {
+  async function refreshMyListings() {
+    if (!isAuthenticated()) {
       setListings([]);
       return;
     }
 
-    const myListings = getSavedListings().filter(
-      (item) =>
-        (item.ownerEmail || '').trim().toLowerCase() ===
-        currentEmail
-    );
-
-    setListings(myListings);
+    try {
+      const response = await api.get('/listings/me/listings');
+      setListings(response.data.listings || []);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Could not load your listings.');
+    }
   }
 
   useEffect(() => {
     refreshMyListings();
   }, []);
 
-  function saveListings(updatedListings) {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(updatedListings)
-      );
-
-      refreshMyListings();
-      return true;
-    } catch {
-      setMessage(
-        'Could not save changes. Browser storage may be full.'
-      );
-      return false;
-    }
-  }
-
   function startEditing(item) {
-    if (!isOwnedByCurrentUser(item)) {
-      setMessage('You can only edit your own listings.');
-      return;
-    }
-
     setEditingId(item._id);
 
     setForm({
       title: item.title || '',
-      category: categories.includes(item.category)
-        ? item.category
-        : 'Books',
+      category: item.category || 'books',
       price: item.price ?? '',
       pickupPoint: item.pickupPoint || '',
       description: item.description || '',
@@ -123,17 +79,7 @@ function MyListings() {
     }));
   }
 
-  function isOwnedByCurrentUser(item) {
-    const currentEmail = getCurrentUserEmail();
-
-    return Boolean(
-      currentEmail &&
-      item.ownerEmail &&
-      item.ownerEmail.trim().toLowerCase() === currentEmail
-    );
-  }
-
-  function handleUpdate(event) {
+  async function handleUpdate(event) {
     event.preventDefault();
 
     const title = form.title.trim();
@@ -141,7 +87,7 @@ function MyListings() {
     const description = form.description.trim();
     const price = Number(form.price);
 
-    if (!getCurrentUserEmail()) {
+    if (!isAuthenticated()) {
       setMessage('Please log in to edit your listing.');
       return;
     }
@@ -159,37 +105,18 @@ function MyListings() {
       return;
     }
 
-    const currentListings = getSavedListings();
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('category', form.category);
+    formData.append('price', String(price));
+    formData.append('pickupPoint', pickupPoint);
+    formData.append('description', description);
 
-    const itemToEdit = currentListings.find(
-      (item) => item._id === editingId
-    );
-
-    if (!itemToEdit || !isOwnedByCurrentUser(itemToEdit)) {
-      setMessage(
-        'You cannot edit this listing because it does not belong to your account.'
-      );
-      cancelEditing();
-      refreshMyListings();
-      return;
-    }
-
-    const updatedListings = currentListings.map((item) =>
-      item._id === editingId && isOwnedByCurrentUser(item)
-        ? {
-            ...item,
-            title,
-            category: form.category,
-            price,
-            pickupPoint,
-            description,
-          }
-        : item
-    );
-
-    if (saveListings(updatedListings)) {
+    try {
+      const response = await api.put(`/listings/${editingId}`, formData);
       setEditingId(null);
-      setMessage('Listing updated successfully!');
+      setMessage(response.data.message || 'Listing updated successfully.');
+      await refreshMyListings();
 
       setForm({
         title: '',
@@ -198,54 +125,8 @@ function MyListings() {
         pickupPoint: '',
         description: '',
       });
-    }
-  }
-
-  function handleDelete(item) {
-    if (!getCurrentUserEmail()) {
-      setMessage('Please log in to delete a listing.');
-      return;
-    }
-
-    if (!isOwnedByCurrentUser(item)) {
-      setMessage('You can only delete your own listings.');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${item.title || 'this listing'}"? This cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
-    const currentListings = getSavedListings();
-
-    const exists = currentListings.some(
-      (savedItem) =>
-        savedItem._id === item._id &&
-        isOwnedByCurrentUser(savedItem)
-    );
-
-    if (!exists) {
-      setMessage('Listing not found or you do not own it.');
-      refreshMyListings();
-      return;
-    }
-
-    const updatedListings = currentListings.filter(
-      (savedItem) =>
-        !(
-          savedItem._id === item._id &&
-          isOwnedByCurrentUser(savedItem)
-        )
-    );
-
-    if (saveListings(updatedListings)) {
-      if (editingId === item._id) {
-        cancelEditing();
-      }
-
-      setMessage('Listing deleted successfully.');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Could not update this listing.');
     }
   }
 
@@ -314,8 +195,8 @@ function MyListings() {
                 style={inputStyle}
               >
                 {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                  <option key={category.value} value={category.value}>
+                    {category.label}
                   </option>
                 ))}
               </select>
@@ -493,14 +374,6 @@ function MyListings() {
                     Edit
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(item)}
-                    disabled={!itemId}
-                    style={deleteButtonStyle}
-                  >
-                    Delete
-                  </button>
                 </div>
               </article>
             );
@@ -538,11 +411,6 @@ const secondaryButtonStyle = {
   ...buttonStyle,
   background: '#e6eee3',
   color: '#304c39',
-};
-
-const deleteButtonStyle = {
-  ...buttonStyle,
-  background: '#a43e3e',
 };
 
 export default MyListings;

@@ -1,6 +1,7 @@
 ﻿
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import api, { saveSession } from '../api';
 
 function AuthPage({ mode }) {
   const navigate = useNavigate();
@@ -9,114 +10,61 @@ function AuthPage({ mode }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [college, setCollege] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [otp, setOtp] = useState('');
   const [otpMessage, setOtpMessage] = useState('');
-  const [resendTimer, setResendTimer] = useState(30);
-  const [resendMessage, setResendMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const isRegister = mode === 'register';
   const isOtp = mode === 'otp';
   const registeredEmail = location.state?.email || '';
 
-  useEffect(() => {
-    if (!isOtp || resendTimer <= 0) return;
-
-    const timerId = setTimeout(() => {
-      setResendTimer((previous) => previous - 1);
-    }, 1000);
-
-    return () => clearTimeout(timerId);
-  }, [isOtp, resendTimer]);
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setOtpMessage('');
+    setSubmitting(true);
 
-    if (isRegister) {
-      setResendMessage('');
-
-      const normalizedEmail = email.trim().toLowerCase();
-      const existingEmail = localStorage.getItem('saanjhaEmail');
-
-      if (existingEmail?.toLowerCase() === normalizedEmail) {
-        setOtpMessage(
-          'This email is already registered. Please log in instead.'
-        );
-        return;
-      }
-
-      // Demo only: localStorage is not secure for storing passwords.
-      localStorage.setItem('saanjhaName', name.trim());
-      localStorage.setItem('saanjhaEmail', normalizedEmail);
-      localStorage.setItem('saanjhaPassword', password);
-
-      navigate('/verify-otp', {
-        state: {
+    try {
+      if (isRegister) {
+        const response = await api.post('/auth/register', {
           name: name.trim(),
-          email: normalizedEmail,
-        },
-      });
-    } else if (isOtp) {
-      if (otp === '1234') {
-        setOtpMessage('');
-
-        // Remember that this demo email was verified.
-        const verifiedEmail = location.state?.email;
-
-        if (verifiedEmail) {
-          localStorage.setItem(
-            'saanjhaVerifiedEmail',
-            verifiedEmail.toLowerCase()
-          );
-        }
-
-        navigate('/login', {
-          state: {
-            emailVerified: true,
-            email: verifiedEmail,
-          },
+          email: email.trim().toLowerCase(),
+          password,
+          college: college.trim(),
+          studentId: studentId.trim() || undefined,
         });
+        navigate('/verify-otp', {
+          state: { email: response.data.email },
+        });
+      } else if (isOtp) {
+        const response = await api.post('/auth/verify-otp', {
+          email: registeredEmail,
+          code: otp,
+        });
+        saveSession(response.data);
+        navigate(location.state?.from || '/');
       } else {
-        setOtpMessage('Incorrect code. Please enter the demo code 1234.');
+        const response = await api.post('/auth/login', {
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        if (response.data.otpRequired) {
+          navigate('/verify-otp', { state: { email: response.data.email } });
+        } else {
+          saveSession(response.data);
+          navigate('/');
+        }
       }
-    } else {
-      const savedEmail = localStorage.getItem('saanjhaEmail');
-      const savedPassword = localStorage.getItem('saanjhaPassword');
-      const verifiedEmail = localStorage.getItem('saanjhaVerifiedEmail');
-      const normalizedEmail = email.trim().toLowerCase();
-
-      if (
-        !savedEmail ||
-        !savedPassword ||
-        normalizedEmail !== savedEmail.toLowerCase() ||
-        password !== savedPassword
-      ) {
-        setOtpMessage(
-          'Invalid email or password. Please check your details or register first.'
-        );
-        return;
-      }
-
-      if (verifiedEmail !== normalizedEmail) {
-        setOtpMessage('Please verify your email before logging in.');
-        return;
-      }
-
-      // Demo login: this is not real server-side authentication.
-      localStorage.setItem('saanjhaLoggedIn', 'true');
-      localStorage.setItem('saanjhaLoggedInEmail', normalizedEmail);
-
-      navigate('/');
+    } catch (error) {
+      setOtpMessage(error.response?.data?.message || 'Could not complete this request.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
   function handleResend() {
-    setResendTimer(30);
-    setResendMessage(
-      'Demo only: no email or OTP was actually sent. Use 1234.'
-    );
-    setOtpMessage('');
-    setOtp('');
+    navigate('/login', { state: { email: registeredEmail } });
   }
 
   return (
@@ -147,7 +95,7 @@ function AuthPage({ mode }) {
 
         <p className="auth-description">
           {isOtp
-            ? 'Enter the demo code to continue your journey.'
+            ? 'Enter the code sent to your campus email.'
             : isRegister
               ? 'Give your pre-loved things a new home.'
               : 'Your campus community is waiting for you.'}
@@ -182,6 +130,31 @@ function AuthPage({ mode }) {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
+              />
+            </label>
+          )}
+
+          {isRegister && (
+            <label className="auth-label">
+              College or campus
+              <input
+                type="text"
+                placeholder="Your college name"
+                value={college}
+                onChange={(event) => setCollege(event.target.value)}
+                required
+              />
+            </label>
+          )}
+
+          {isRegister && (
+            <label className="auth-label">
+              Student ID <span>(optional)</span>
+              <input
+                type="text"
+                placeholder="Your student ID"
+                value={studentId}
+                onChange={(event) => setStudentId(event.target.value)}
               />
             </label>
           )}
@@ -225,44 +198,26 @@ function AuthPage({ mode }) {
             </p>
           )}
 
-          <button className="auth-submit" type="submit">
+          <button className="auth-submit" type="submit" disabled={submitting}>
             {isOtp
               ? 'Verify & continue'
               : isRegister
-                ? 'Create account →'
-                : 'Log in →'}
+                ? (submitting ? 'Creating account...' : 'Create account →')
+                : (submitting ? 'Sending code...' : 'Log in →')}
           </button>
 
           {isOtp && (
             <div className="auth-resend">
-              {resendTimer > 0 ? (
-                <p>
-                  Resend code in{' '}
-                  <strong>
-                    00:{String(resendTimer).padStart(2, '0')}
-                  </strong>
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  className="auth-resend-button"
-                  onClick={handleResend}
-                >
-                  Resend code
-                </button>
-              )}
-
-              {resendMessage && (
-                <p role="status">{resendMessage}</p>
-              )}
+              <button type="button" className="auth-resend-button" onClick={handleResend}>
+                Return to login to request a new code
+              </button>
             </div>
           )}
         </form>
 
         {isOtp && (
           <p className="auth-demo-note">
-            Frontend demo only: no real email or OTP is sent.
-            Use 1234 as the demo code.
+            In local development, the fallback code is printed by the backend when email is not configured.
           </p>
         )}
 
