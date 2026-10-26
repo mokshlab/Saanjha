@@ -50,13 +50,32 @@ export default function ListingDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  // Listing state works during navigation; localStorage supports refresh.
+  // Get the listing passed during navigation, or load it from localStorage.
   const passedItem =
     state?.item && String(state.item._id) === String(id)
       ? state.item
       : null;
 
   const item = passedItem || getLocalListing(id);
+
+  // Current logged-in user's email.
+  const currentUserEmail =
+    localStorage.getItem('saanjhaLoggedIn') === 'true'
+      ? (localStorage.getItem('saanjhaLoggedInEmail') || '')
+          .trim()
+          .toLowerCase()
+      : '';
+
+  // Listing owner's email.
+  const ownerEmail = (item?.ownerEmail || '')
+    .trim()
+    .toLowerCase();
+
+  // Prevent the listing owner from reserving their own item.
+  const isOwner =
+    Boolean(currentUserEmail) &&
+    Boolean(ownerEmail) &&
+    currentUserEmail === ownerEmail;
 
   const [alreadyReserved, setAlreadyReserved] = useState(
     () => hasActiveReservation(id)
@@ -76,6 +95,18 @@ export default function ListingDetails() {
   }
 
   function handleReservation() {
+    // Extra check in the click handler as well.
+    if (isOwner) {
+      window.alert("You can't reserve your own listing.");
+      return;
+    }
+
+    // Require the user to log in before reserving.
+    if (localStorage.getItem('saanjhaLoggedIn') !== 'true') {
+      navigate('/login');
+      return;
+    }
+
     try {
       const reservations = getReservations();
 
@@ -193,25 +224,33 @@ export default function ListingDetails() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={handleReservation}
-            disabled={alreadyReserved}
-          >
-            {alreadyReserved
-              ? 'Already Reserved ✓'
-              : 'Reserve Item'}
-          </button>
-
-          {alreadyReserved && (
-            <p role="status">
-              You have already reserved this item. Visit{' '}
-              <Link to="/my-reservations">
-                My Reservations
-              </Link>{' '}
-              to check its status.
+          {isOwner ? (
+            <p className="owner-notice" role="status">
+              Your listing — you can't reserve your own item.
             </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleReservation}
+                disabled={alreadyReserved}
+              >
+                {alreadyReserved
+                  ? 'Already Reserved ✓'
+                  : 'Reserve Item'}
+              </button>
+
+              {alreadyReserved && (
+                <p role="status">
+                  You have already reserved this item. Visit{' '}
+                  <Link to="/my-reservations">
+                    My Reservations
+                  </Link>{' '}
+                  to check its status.
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -381,6 +381,9 @@ if (listingStatus !== 'approved') {
 
       const newListing = {
         _id: `local-${Date.now()}`,
+        ownerEmail: (
+  localStorage.getItem('saanjhaLoggedInEmail') || ''
+).trim().toLowerCase(),
         title,
         category: itemCategory,
         price,
