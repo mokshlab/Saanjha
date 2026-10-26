@@ -23,11 +23,11 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 
 | ID | Task | Area | Status | Acceptance check |
 |---|---|---|---|---|
-| AUTH-01 | Build student registration/login/OTP screens | UI/API | BACKLOG | Campus email validation and OTP flow work end to end |
-| LIST-01 | Build listing creation and edit form | UI | BACKLOG | At least two images, categories, books fields, and zero price work |
+| AUTH-01 | Build student registration/login/OTP screens | UI/API | HUMAN VERIFICATION PENDING | Backend registration, campus email validation, OTP, JWT session, and logout are connected |
+| LIST-01 | Build listing creation and edit form | UI | HUMAN VERIFICATION PENDING | Authenticated submission accepts at least two images, categories, condition, and zero price |
 | LIST-03 | Add listing edit approval rules | API | REVIEW | Sensitive edits leave discovery until admin approval |
 | LIST-02 | Add Cloudinary backend media upload | API | REVIEW | Configured Cloudinary stores accepted media; blank credentials use the local fallback |
-| MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings |
+| MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings through the API |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
 | RES-03 | Add expiry and cancellation notifications | API | REVIEW | Expired/cancelled listing reopens and buyer is notified |
@@ -36,7 +36,7 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 | EXP-01 | Run reservation concurrency experiment | EXP | REVIEW | Runner reports raw status counts and winner count for supplied tokens |
 | EXP-02 | Add campus-word search comparison | EXP | BACKLOG | Held-out queries produce transparent metrics |
 | WANT-01 | Build Wanted Board | UI/API | BACKLOG | Only start after reservation flow is reliable |
-| DEMO-01 | Prepare five-day evaluator demo script | EXP | BACKLOG | Register/list/approve/search/reserve/handover path is rehearsed |
+| DEMO-01 | Prepare five-day evaluator demo script | EXP | HUMAN VERIFICATION PENDING | Register/list/approve/search/reserve/handover path is rehearsed |
 
 ## Team Rules
 
@@ -74,3 +74,7 @@ Defer Cloudinary, Wanted Board, and search experiments if the core evaluator pat
 The current PR scope contains the reservation models, atomic reservation endpoint, expiry/cancellation/handover implementation, notifications, database-readiness fix, listing-edit rules, focused tests, optional Cloudinary storage, and the concurrency runner. These remain `REVIEW` until owner verification.
 
 No task in this scope is marked `DONE` without owner verification.
+
+## Current Evaluator Boundary
+
+The merged project contains the backend reservation and handover APIs, backend tests, the concurrency runner, and frontend-connected authentication and seller listing flows. The frontend reservation, handover, and admin moderation screens still use incomplete or local-only behavior and remain outside the verified evaluator path until the owning teammate checks them.

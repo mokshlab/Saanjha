@@ -15,23 +15,23 @@ The frontend provides the user interface for browsing listings, managing items, 
 - Individual listing details.
 
 ### Authentication UI
-- Registration and login pages.
-- Demo OTP verification flow.
-- Login validation.
+- Registration and login pages connected to `/api/auth`.
+- Campus email validation and backend OTP verification.
+- JWT session storage and protected route checks.
 - Logged-in user name in the navigation bar.
 - Logout functionality.
 
 ### Listings and Reservations
-- Create and browse item listings.
-- View listing details and moderation status.
-- Reservation flow and confirmation page.
-- My Listings and My Reservations pages.
-- My Profile page.
+- Browse approved listings from the backend with search, filtering, and sorting.
+- Authenticated listing submission with at least two images, condition, categories, and zero price support.
+- Backend-backed My Listings retrieval and seller edits.
+- Listing detail, reservation, and confirmation views remain available, but reservation screens are not yet fully connected to the reservation API.
+- My Profile and My Reservations pages remain evaluator UI work in progress.
 
 ### Admin Moderation
-- View submitted listings.
-- Approve or reject listings.
-- Reflect moderation status in listing visibility.
+- Admin moderation UI exists as a design/evaluator view.
+- Backend moderation endpoints are implemented.
+- The UI is not yet fully connected to the moderation API.
 
 ### Route Protection
 - Frontend route checks for selected pages, including profile, listings, reservations, and reservation confirmation.
@@ -43,7 +43,8 @@ The frontend provides the user interface for browsing listings, managing items, 
 - JavaScript
 - CSS
 - React Router
-- Browser localStorage for demo state and data
+- Browser localStorage for remaining demo-only views
+- Axios for connected auth and listing API calls
 
 ## Project Structure
 
@@ -98,10 +99,11 @@ Use the values supplied by the project team. Do not commit secrets or private cr
 
 ## Current Implementation Notes
 
-- Authentication and OTP verification currently include demo behavior using localStorage and a fixed demo OTP.
-- Frontend route checks alone do not provide secure authorization.
-- Real authentication, OTP delivery, and admin permissions require appropriate backend enforcement.
-- API connectivity and persistent database behavior should be verified against the current backend before deployment.
+- Auth and seller listing flows use the backend API and JWT sessions.
+- OTP delivery uses SMTP when configured and a development fallback when delivery is unavailable.
+- Reservation, handover, and admin moderation screens still need connected workflow verification.
+- Frontend route checks do not replace backend authorization.
+- API connectivity and persistent database behavior require owner verification before deployment.
 
 ## Frontend Contribution : Contributor: Namita Gupta
 
@@ -118,11 +120,10 @@ My contribution to Saanjha focused on frontend development, including:
 
 ## Future Improvements
 
-- Complete and verify frontend-backend API integration.
-- Implement secure server-side authentication and authorization.
+- Connect reservation, expiry, cancellation, notification, and handover screens to the backend.
+- Connect the admin moderation screen to the moderation API.
 - Add robust loading, empty, and error states.
-- Add automated frontend tests.
-- Perform end-to-end testing with the integrated backend.
+- Add automated frontend tests and end-to-end testing with the integrated backend.
 
 ---
 

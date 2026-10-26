@@ -184,7 +184,7 @@ Price, pickup-point, and book-detail edit behavior is currently flexible and sho
 5. CURRENT IMPLEMENTED STATUS [CURRENT]
 ----------------------------------------------------------------
 
-The current code is an independent Saanjha foundation and evaluator shell. It is not yet the complete product described above.
+The current code is a merged evaluator build. It implements the backend reservation lifecycle and connects the first student authentication and seller listing flows, but it is not yet the complete product described above.
 
 ### Backend currently implemented
 
@@ -212,6 +212,13 @@ The current code is an independent Saanjha foundation and evaluator shell. It is
 - Admin approve/reject listing endpoints.
 - Admin user listing and active-status toggle.
 - Upload validation through Multer.
+- Listing edit approval rules for sensitive fields.
+- Optional Cloudinary image storage with a local fallback.
+- Reservation and ItemJourney models.
+- Atomic first-come-first-served reservation with one active reservation per buyer.
+- Preset duration validation with a 54-hour default.
+- Expiry release, cancellation, stored notifications, four-digit handover confirmation, and item journey events.
+- Focused backend workflow tests and a reservation concurrency experiment runner.
 
 ### Frontend currently implemented
 
@@ -219,9 +226,14 @@ The current code is an independent Saanjha foundation and evaluator shell. It is
 - Saanjha visual identity and responsive layout.
 - Approved-listing browsing screen.
 - Client-side listing search filtering.
+- Backend-connected student registration, login, OTP verification, JWT session, and logout flow.
+- Backend-connected listing submission with two-image validation and zero-price support.
+- Backend-backed My Listings retrieval and seller editing.
 - API proxy to backend port 3101.
 - Frontend development port 5174.
 - Clear placeholder messaging when the backend is unavailable.
+
+The frontend reservation, handover, and admin moderation screens remain incomplete integrations and require owner workflow verification.
 
 ### Working page plan [PLANNED]
 
@@ -238,7 +250,7 @@ The practical target is 9 core pages/views plus 1 optional view. A page may be a
 9. Admin Moderation - pending listings, approval/rejection, reports, and user controls.
 10. Wanted Board - optional; add only after the core nine are reliable.
 
-Only Browse Listings currently exists as a working frontend shell. The remaining pages are planned and must not be presented as implemented.
+Browse Listings, authentication, listing submission, and My Listings have working implementation surfaces. Reservation, handover, and admin moderation views remain in progress and must not be presented as fully connected workflows.
 
 ### Current default administrator
 
@@ -257,26 +269,16 @@ The real development value belongs only in the ignored local team context and `.
 
 These are the next product modules, not current features:
 
-1. Full student registration/login/OTP screens in the frontend.
-2. Listing creation/editing form in the frontend.
-3. Cloudinary upload through the backend.
-4. Video upload with 80 MB and 90-second validation.
-5. Admin moderation screens in the frontend.
-6. Reservation model and atomic first-come-first-served reservation endpoint.
-7. Preset duration control with 54-hour default.
-8. Expiry worker or scheduled release process.
-9. Buyer notification after expiry or seller cancellation.
-10. Four-digit handover code generation and seller confirmation.
-11. Item journey/status history.
-12. Contact and exact pickup-point visibility after reservation.
-13. Listing edit approval rules.
-14. User reports and admin review flow.
-15. Wanted Board and matching notifications.
-16. Campus-word search normalization and synonym behavior.
-17. Concurrency experiment scripts.
-18. Search-quality experiment scripts.
-19. Automated backend and frontend tests.
-20. Deployment, CI, accessibility audit, and performance hardening.
+1. Connect the frontend reservation and handover views to the reservation API.
+2. Connect the admin moderation screen to the moderation API.
+3. Video upload with 80 MB and 90-second validation.
+4. Contact and exact pickup-point visibility after reservation.
+5. User reports and admin review flow.
+6. Wanted Board and matching notifications.
+7. Campus-word search normalization and synonym behavior.
+8. Search-quality experiment scripts.
+9. Automated frontend tests and full end-to-end testing.
+10. Deployment, CI, accessibility audit, and performance hardening.
 
 Do not describe these features as working in a synopsis or presentation until they are implemented and tested.
 

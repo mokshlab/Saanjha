@@ -4,7 +4,7 @@ Saanjha is a campus-only peer-to-peer reuse platform. Students can list useful i
 
 ## Current Status
 
-This is the initial independent application shell. The current code includes:
+The current evaluator build includes:
 
 - Saanjha-specific React/Vite frontend.
 - Express/Mongoose backend.
@@ -15,8 +15,15 @@ This is the initial independent application shell. The current code includes:
 - Listing discovery and student listing submission routes.
 - Admin listing approval/rejection and user activation controls.
 - MongoDB Atlas/local connection with development in-memory fallback.
+- Student registration, login, OTP verification, JWT sessions, and logout through the backend.
+- Authenticated listing submission with at least two images, zero-price support, seller-owned My Listings, and listing edits.
+- Listing edit approval rules for title, category, condition, and image replacement.
+- Reservation models and atomic first-come-first-served reservation with one active reservation per buyer.
+- Reservation duration presets, expiry release, cancellation, notifications, four-digit handover confirmation, and item journey history.
+- Backend reservation workflow tests and a reservation concurrency experiment runner.
+- Optional Cloudinary image storage with a local fallback when credentials are not configured.
 
-Reservation, seller-selected expiry presets of 3, 6, 12, 24, 36, 54, 72, or 96 hours with a 54-hour default, four-digit handover confirmation, item journey history, reports, wanted-board matching, search experiments, Cloudinary media integration, and automated tests are planned next. They are not yet complete features.
+The remaining evaluator gaps are the connected frontend reservation/handover screens, API-connected admin moderation screen, reports, Wanted Board, search experiments, video upload, deployment hardening, and owner confirmation of the real connected workflows.
 
 ## Scope Boundary
 
@@ -34,7 +41,7 @@ cd ../frontend
 npm install
 ```
 
-Create `.local/.env` from the local template, provide a unique `JWT_SECRET`, and set the campus email domain to `university.edu.in`. Backend and frontend environment values are loaded from this file only. Add Cloudinary credentials there when media upload implementation begins. MongoDB Atlas is the target database; the in-memory fallback is only for the initial local shell.
+Create `.local/.env` from the local template, provide a unique `JWT_SECRET`, and set the campus email domain for the target campus. Backend and frontend environment values are loaded from this file only. Add Cloudinary credentials when remote media storage is required. MongoDB Atlas is the target database; the in-memory fallback is available for local development.
 
 The first administrator is created automatically when no admin exists. Set private local values in `.local/.env`:
 
@@ -67,4 +74,4 @@ Open `http://localhost:5174`. The frontend proxies API requests to `http://127.0
 - [TASK_BOARD.md](TASK_BOARD.md) - public-safe shared work tracking.
 - [frontend/README.md](frontend/README.md) - frontend shell notes.
 
-The project is intentionally being developed in phases. The current shell is ready for the next implementation phase: reservation correctness, expiry, handover confirmation, item history, and the evaluator demo flow.
+The project is intentionally being developed in phases. The current build is ready for evaluator review of authentication, listing submission, moderation APIs, reservation correctness, expiry, cancellation, notifications, and handover APIs. Connected frontend reservation and moderation workflows remain the next integration focus.
