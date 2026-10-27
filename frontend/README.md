@@ -29,9 +29,9 @@ The frontend provides the user interface for browsing listings, managing items, 
 - My Profile and My Reservations pages remain evaluator UI work in progress.
 
 ### Admin Moderation
-- Admin moderation UI exists as a design/evaluator view.
-- Backend moderation endpoints are implemented.
-- The UI is not yet fully connected to the moderation API.
+- Admin moderation UI loads pending listings from the backend.
+- Admin approve/reject actions use the moderation API.
+- The connected workflow remains pending owner verification.
 
 ### Route Protection
 - Frontend route checks for selected pages, including profile, listings, reservations, and reservation confirmation.

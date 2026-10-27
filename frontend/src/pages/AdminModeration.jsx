@@ -1,16 +1,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api';
 
-const STORAGE_KEY = 'saanjhaUserListings';
-
-function readListings() {
-  try {
-    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+function displayStatus(status) {
+  const value = String(status || 'pending');
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function AdminModeration() {
@@ -20,29 +15,34 @@ function AdminModeration() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    setListings(readListings());
+    let active = true;
+
+    api.get('/listings/moderation/pending')
+      .then((response) => {
+        if (active) setListings(response.data.listings || []);
+      })
+      .catch((error) => {
+        if (active) setMessage(error.response?.data?.message || 'Could not load pending listings.');
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  function updateStatus(item, status) {
-    const current = readListings();
-    const exists = current.some((entry) => entry._id === item._id);
-
-    if (!exists) {
-      setListings(current);
-      setMessage('Listing not found. Please refresh and try again.');
-      return;
-    }
-
-    const updated = current.map((entry) =>
-      entry._id === item._id ? { ...entry, status } : entry
-    );
-
+  async function updateStatus(item, status) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      setListings(updated);
+      const endpoint = status === 'Approved' ? 'approve' : 'reject';
+      const response = await api.put(`/listings/${item._id}/${endpoint}`, status === 'Rejected'
+        ? { reason: 'Rejected by administrator' }
+        : {});
+      const updatedListing = response.data.listing;
+      setListings((current) => current.map((entry) => (
+        entry._id === item._id ? updatedListing : entry
+      )));
       setMessage(`"${item.title || 'Listing'}" marked ${status.toLowerCase()}.`);
-    } catch {
-      setMessage('Could not save this change in browser storage.');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Could not update this listing.');
     }
   }
 
@@ -50,7 +50,7 @@ function AdminModeration() {
     const result = { Pending: 0, Approved: 0, Rejected: 0 };
 
     listings.forEach((item) => {
-      const status = item.status || 'Approved';
+      const status = displayStatus(item.status);
       if (result[status] !== undefined) result[status]++;
     });
 
@@ -61,7 +61,7 @@ function AdminModeration() {
     const query = search.trim().toLowerCase();
 
     return listings.filter((item) => {
-      const status = item.status || 'Approved';
+      const status = displayStatus(item.status);
       const matchesStatus = filter === 'All' || status === filter;
       const matchesSearch = [
         item.title,
@@ -199,7 +199,7 @@ function AdminModeration() {
         ) : (
           <div className="admin-listing-grid">
             {visibleListings.map((item, index) => {
-              const status = item.status || 'Approved';
+              const status = displayStatus(item.status);
               const photo = item.images?.[0] || item.image;
 
               return (

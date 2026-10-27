@@ -37,13 +37,13 @@ The current build includes:
 - Backend-connected listing submission with at least two images and free-item support
 - Seller-owned My Listings retrieval and editing
 - Listing approval rules for sensitive edits
-- Admin moderation APIs
+- API-connected admin moderation for pending listings and approve/reject actions
 - Atomic reservation and one-active-reservation enforcement
 - Reservation duration presets, expiry, cancellation, notifications, and handover confirmation
 - Item journey history, focused backend tests, and a concurrency experiment runner
 - Optional Cloudinary media storage with local development fallback
 
-The main remaining integration work is connecting the frontend reservation, handover, and admin moderation views fully to the backend. Those workflows remain under review until the owning teammate verifies them end to end.
+The main remaining integration work is connecting the frontend reservation and handover views fully to the backend. Admin moderation is now API-connected but remains under review until the owning teammate verifies it end to end.
 
 ## Scope
 

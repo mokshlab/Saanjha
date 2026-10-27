@@ -27,7 +27,7 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 | LIST-01 | Build listing creation and edit form | UI | HUMAN VERIFICATION PENDING | Authenticated submission accepts at least two images, categories, condition, and zero price |
 | LIST-03 | Add listing edit approval rules | API | REVIEW | Sensitive edits leave discovery until admin approval |
 | LIST-02 | Add Cloudinary backend media upload | API | REVIEW | Configured Cloudinary stores accepted media; blank credentials use the local fallback |
-| MOD-01 | Build admin moderation screen | UI/API | BACKLOG | Admin can approve/reject and see pending listings through the API |
+| MOD-01 | Build admin moderation screen | UI/API | HUMAN VERIFICATION PENDING | Admin can load pending listings and approve/reject them through the API |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
 | RES-03 | Add expiry and cancellation notifications | API | REVIEW | Expired/cancelled listing reopens and buyer is notified |
@@ -77,4 +77,4 @@ No task in this scope is marked `DONE` without owner verification.
 
 ## Current Evaluator Boundary
 
-The merged project contains the backend reservation and handover APIs, backend tests, the concurrency runner, and frontend-connected authentication and seller listing flows. The frontend reservation, handover, and admin moderation screens still use incomplete or local-only behavior and remain outside the verified evaluator path until the owning teammate checks them.
+The merged project contains the backend reservation and handover APIs, backend tests, the concurrency runner, frontend-connected authentication and seller listing flows, and API-connected admin moderation. The frontend reservation and handover screens remain outside the verified evaluator path until the owning teammate checks them.

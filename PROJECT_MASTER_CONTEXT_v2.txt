@@ -233,7 +233,7 @@ The current code is a merged evaluator build. It implements the backend reservat
 - Frontend development port 5174.
 - Clear placeholder messaging when the backend is unavailable.
 
-The frontend reservation, handover, and admin moderation screens remain incomplete integrations and require owner workflow verification.
+The frontend reservation and handover screens remain incomplete integrations. Admin moderation is API-connected but requires owner workflow verification.
 
 ### Working page plan [PLANNED]
 
@@ -270,7 +270,7 @@ The real development value belongs only in the ignored local team context and `.
 These are the next product modules, not current features:
 
 1. Connect the frontend reservation and handover views to the reservation API.
-2. Connect the admin moderation screen to the moderation API.
+2. Verify the connected admin moderation workflow with the owning teammate.
 3. Video upload with 80 MB and 90-second validation.
 4. Contact and exact pickup-point visibility after reservation.
 5. User reports and admin review flow.
