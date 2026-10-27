@@ -176,18 +176,18 @@ function AuthPage({ mode }) {
 
           {isOtp && (
             <label className="auth-label">
-              Demo verification code
+              Six-digit verification code
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Enter 4-digit code"
+                placeholder="Enter 6-digit code"
                 value={otp}
                 onChange={(event) => {
                   setOtp(event.target.value);
                   setOtpMessage('');
                 }}
-                pattern="[0-9]{4}"
-                maxLength={4}
+                pattern="[0-9]{6}"
+                maxLength={6}
                 required
               />
             </label>
