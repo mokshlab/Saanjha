@@ -105,13 +105,13 @@ There is currently no product-policy maximum image count. The upload system may 
 
 ### Campus identity
 
-- Registration accepts only an email ending with `@university.edu.in`.
+- Registration accepts only an email ending with `@chitkara.edu.in`.
 - Student ID is optional.
 - Campus-specific values should be environment-configurable:
 
 ```env
 CAMPUS_NAME=Example University
-CAMPUS_EMAIL_DOMAIN=university.edu.in
+CAMPUS_EMAIL_DOMAIN=chitkara.edu.in
 ```
 
 Each campus can run its own configured version with adjusted campus name, email domain, pickup points, and suitable wording.
@@ -137,7 +137,7 @@ Cash or UPI may happen physically at handover, but Saanjha does not process or s
 ----------------------------------------------------------------
 
 ```text
-Student registers with an @university.edu.in email
+Student registers with an @chitkara.edu.in email
   -> student logs in through password plus OTP
   -> student submits a listing with at least two images
   -> admin approves or rejects the listing
@@ -257,7 +257,7 @@ Browse Listings, authentication, listing submission, and My Listings have workin
 Configured through private environment variables:
 
 ```env
-ADMIN_EMAIL=admin@university.edu.in
+ADMIN_EMAIL=admin@chitkara.edu.in
 ADMIN_PASSWORD=<private local value>
 ```
 

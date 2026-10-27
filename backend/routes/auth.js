@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
     if (!name || !email || !password || !college) {
       return res.status(400).json({ message: 'Name, campus email, password, and college are required' });
     }
-    const campusEmailDomain = process.env.CAMPUS_EMAIL_DOMAIN || 'university.edu.in';
+    const campusEmailDomain = process.env.CAMPUS_EMAIL_DOMAIN || 'chitkara.edu.in';
     if (!email.toLowerCase().endsWith(`@${campusEmailDomain}`)) return res.status(400).json({ message: `Use your @${campusEmailDomain} campus email` });
     const duplicateQuery = [{ email: email.toLowerCase() }];
     if (studentId) duplicateQuery.push({ studentId });

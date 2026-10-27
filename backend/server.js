@@ -48,7 +48,7 @@ async function ensureAdmin() {
   if (existingAdmin) return;
   await User.create({
     name: 'Saanjha Campus Steward',
-    email: process.env.ADMIN_EMAIL || 'admin@university.edu.in',
+    email: process.env.ADMIN_EMAIL || 'admin@chitkara.edu.in',
     password: process.env.ADMIN_PASSWORD || 'change-this-before-demo',
     role: 'admin',
     college: process.env.CAMPUS_NAME || 'Example University'

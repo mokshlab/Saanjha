@@ -79,7 +79,7 @@ export default function ProfilePage() {
                 setEmail(event.target.value);
                 setSaved(false);
               }}
-              placeholder="you@college.edu"
+              placeholder="you@chitkara.edu.in"
               required
             />
           </label>

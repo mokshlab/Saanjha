@@ -126,7 +126,7 @@ function AuthPage({ mode }) {
               College email
               <input
                 type="email"
-                placeholder="you@college.edu"
+                placeholder="you@chitkara.edu.in"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -165,6 +165,7 @@ function AuthPage({ mode }) {
               <input
                 type="password"
                 placeholder="At least 6 characters"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 minLength={6}
