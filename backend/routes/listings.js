@@ -98,4 +98,41 @@ router.put('/:id/reject', auth, adminAuth, async (req, res) => {
   res.json({ message: 'Listing rejected', listing });
 });
 
-module.exports = router;
+module.exports = router;const Reservation = require('../models/Reservation');
+
+router.delete('/:id', auth, studentAuth, async (req, res) => {
+  try {
+    const listing = await Listing.findOne({
+      _id: req.params.id,
+      seller: req.user._id
+    });
+
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found.' });
+    }
+
+    if (['reserved', 'sold'].includes(listing.status)) {
+      return res.status(409).json({
+        message: 'Reserved or sold listings cannot be deleted.'
+      });
+    }
+
+    const activeReservation = await Reservation.findOne({
+      listing: listing._id,
+      status: 'active'
+    });
+
+    if (activeReservation) {
+      return res.status(409).json({
+        message: 'This listing has an active reservation.'
+      });
+    }
+
+    await listing.deleteOne();
+
+    return res.json({ message: 'Listing deleted successfully.' });
+  } catch (error) {
+    console.error('Listing deletion failed:', error.message);
+    return res.status(500).json({ message: 'Could not delete listing.' });
+  }
+});

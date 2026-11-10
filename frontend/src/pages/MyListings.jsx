@@ -130,6 +130,18 @@ function MyListings() {
     }
   }
 
+  async function handleDelete(item) {
+    if (!window.confirm(`Delete "${item.title}" permanently?`)) return;
+
+    try {
+      const response = await api.delete(`/listings/${item._id}`);
+      if (editingId === item._id) cancelEditing();
+      setMessage(response.data.message || 'Listing deleted successfully.');
+      await refreshMyListings();
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Could not delete this listing.');
+    }
+  }
   return (
     <main
       style={{
@@ -373,7 +385,14 @@ function MyListings() {
                   >
                     Edit
                   </button>
-
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item)}
+                    disabled={!itemId}
+                    style={{ ...secondaryButtonStyle, background: '#f8e5e2', color: '#9b3028' }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </article>
             );
@@ -414,3 +433,6 @@ const secondaryButtonStyle = {
 };
 
 export default MyListings;
+
+
+

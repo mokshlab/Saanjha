@@ -1,4 +1,6 @@
+
 const fs = require('fs').promises;
+const path = require('path');
 const cloudinary = require('cloudinary').v2;
 
 const cloudinaryConfigured = Boolean(
@@ -17,13 +19,18 @@ if (cloudinaryConfigured) {
 }
 
 async function storeListingImages(files) {
-  if (!cloudinaryConfigured) return files.map((file) => file.path);
+  if (!cloudinaryConfigured) {
+    return files.map((file) => (
+      `/uploads/listings/${path.basename(file.path)}`
+    ));
+  }
 
   return Promise.all(files.map(async (file) => {
     const result = await cloudinary.uploader.upload(file.path, {
       folder: process.env.CLOUDINARY_FOLDER || 'saanjha/listings',
       resource_type: 'image'
     });
+
     await fs.unlink(file.path);
     return result.secure_url;
   }));
