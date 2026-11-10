@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import { useNavigate } from 'react-router-dom';
 import SustainabilitySection from './components/SustainabilitySection';
-import api, { clearSession, isAuthenticated } from './api';
+import api, { clearSession, isAuthenticated, getStoredUser } from './api';
 
 const demoListings = [
   {
@@ -13,7 +13,7 @@ const demoListings = [
     description: 'Well-maintained cycle, perfect for campus rides.',
     price: 2800,
     pickupPoint: 'Main Gate',
-    emoji: '🚲',
+    emoji: '\u{1F6B2}',
     images: [
       'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&auto=format&fit=crop&q=80',
     ],
@@ -25,7 +25,7 @@ const demoListings = [
     description: 'Useful textbook in good condition.',
     price: 250,
     pickupPoint: 'Library Entrance',
-    emoji: '📚',
+    emoji: '\u{1F4DA}',
     images: [
       'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&auto=format&fit=crop&q=80',
     ],
@@ -37,7 +37,7 @@ const demoListings = [
     description: 'Comfortable headphones for studying and music.',
     price: 650,
     pickupPoint: 'Student Centre',
-    emoji: '🎧',
+    emoji: '\u{1F3A7}',
     images: [
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
     ],
@@ -49,7 +49,7 @@ const demoListings = [
     description: 'Compact lamp for study sessions.',
     price: 350,
     pickupPoint: 'Hostel Block A',
-    emoji: '💡',
+    emoji: '\u{1F4A1}',
     images: [
       'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
     ],
@@ -61,7 +61,7 @@ const demoListings = [
     description: 'Spacious everyday bag with multiple pockets.',
     price: 400,
     pickupPoint: 'Academic Block',
-    emoji: '🎒',
+    emoji: '\u{1F392}',
     images: [
       'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80',
     ],
@@ -73,7 +73,7 @@ const demoListings = [
     description: 'Semester notes ready for their next owner.',
     price: 120,
     pickupPoint: 'Library Entrance',
-    emoji: '📝',
+    emoji: '\u{1F4DA}',
     images: [
       'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80',
     ],
@@ -95,6 +95,7 @@ function HomePage() {
     : '';
 });
   const navigate = useNavigate();
+const isAdmin = getStoredUser()?.role === 'admin';
 
   const [listings, setListings] = useState([]);
   const [search, setSearch] = useState('');
@@ -118,7 +119,7 @@ function HomePage() {
     let active = true;
 
     api
-      .get('/listings')
+      .get(isAdmin ? '/listings/admin/all' : '/listings')
       .then((response) => {
         if (!active) return;
 
@@ -160,7 +161,7 @@ function HomePage() {
     const filtered = listings.filter((item) => {
       const listingStatus = (item.status || 'Approved').toLowerCase();
 
-if (listingStatus !== 'approved') {
+if (!isAdmin && listingStatus !== 'approved') {
   return false;
 }
       const searchableText = [
@@ -375,7 +376,27 @@ if (listingStatus !== 'approved') {
       setSubmitting(false);
     }
   }
+async function handleAdminDelete(item) {
+  const confirmed = window.confirm(
+    `Are you sure you want to permanently delete "${item.title}"?`
+  );
 
+  if (!confirmed) return;
+
+  try {
+    const response = await api.delete(`/listings/admin/${item._id}`);
+
+    setListings((currentListings) =>
+      currentListings.filter((listing) => listing._id !== item._id)
+    );
+
+    setStatus(response.data.message || 'Listing deleted successfully.');
+  } catch (error) {
+    setStatus(
+      error.response?.data?.message || 'Could not delete listing.'
+    );
+  }
+}
   function openListingForm() {
     setShowForm(true);
 
@@ -463,12 +484,12 @@ if (listingStatus !== 'approved') {
           </p>
 
           <a className="primary-button" href="#browse">
-            Explore listings <span>↗</span>
+            Explore listings <span>{'\u2197'}</span>
           </a>
 
           <div className="hero-note">
-            <span>✓</span> Student community&nbsp; · &nbsp;Campus pickup
-            &nbsp; · &nbsp;Reuse more
+            <span>{'\u2713'}</span> Student community&nbsp; {'\u00B7'} &nbsp;Campus pickup
+            &nbsp; {'\u00B7'} &nbsp;Reuse more
           </div>
         </div>
 
@@ -478,19 +499,19 @@ if (listingStatus !== 'approved') {
         >
           <div className="art-circle circle-one" />
           <div className="art-circle circle-two" />
-          <div className="floating-note note-top">♻️ Give it another go</div>
-          <div className="hero-emoji">🎒</div>
-          <div className="hero-emoji emoji-book">📚</div>
-          <div className="hero-emoji emoji-cycle">🚲</div>
+          <div className="floating-note note-top">{'\u267B\uFE0F'} Give it another go</div>
+          <div className="hero-emoji">{'\u{1F393}'}</div>
+          <div className="hero-emoji emoji-book">{'\u{1F4DA}'}</div>
+          <div className="hero-emoji emoji-cycle">{'\u{1F6B2}'}</div>
           <div className="floating-note note-bottom">
-            Made for campus life ✨
+            Made for campus life {'\u2728'}
           </div>
         </div>
       </section>
 
       <section className="trust-strip" aria-label="Community benefits">
         <div>
-          <span>♻</span>
+          <span>{'\u267B'}</span>
           <p>
             <strong>Reuse, don't waste</strong>
             <small>Give useful things a new home</small>
@@ -498,7 +519,7 @@ if (listingStatus !== 'approved') {
         </div>
 
         <div>
-          <span>🎓</span>
+          <span>{'\u{1F393}'}</span>
           <p>
             <strong>Made for students</strong>
             <small>A community that gets you</small>
@@ -506,7 +527,7 @@ if (listingStatus !== 'approved') {
         </div>
 
         <div>
-          <span>📍</span>
+          <span>{'\u{1F4CD}'}</span>
           <p>
             <strong>Meet on campus</strong>
             <small>Arrange pickup in person</small>
@@ -531,7 +552,7 @@ if (listingStatus !== 'approved') {
         </div>
 
         <label className="search-box">
-          <span aria-hidden="true">⌕</span>
+          <span aria-hidden="true">{'\u2715'}</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -545,7 +566,7 @@ if (listingStatus !== 'approved') {
               onClick={() => setSearch('')}
               aria-label="Clear search"
             >
-              ×
+              {'\u00D7'}
             </button>
           )}
         </label>
@@ -568,19 +589,19 @@ if (listingStatus !== 'approved') {
 
         <div className="listing-filters">
           <div className="price-filter">
-            <label htmlFor="min-price">Min price (₹)</label>
+            <label htmlFor="min-price">Min price ({'\u20B9'})</label>
             <input
               id="min-price"
               type="number"
               min="0"
-              placeholder="₹0"
+              placeholder={`\u20B90`}
               value={minPrice}
               onChange={(event) => setMinPrice(event.target.value)}
             />
           </div>
 
           <div className="price-filter">
-            <label htmlFor="max-price">Max price (₹)</label>
+            <label htmlFor="max-price">Max price ({'\u20B9'})</label>
             <input
               id="max-price"
               type="number"
@@ -625,7 +646,7 @@ if (listingStatus !== 'approved') {
 
         {!status && filteredListings.length === 0 && (
           <div className="empty-state">
-            <span>🔎</span>
+            <span>{'\u{1F50D}'}</span>
             <h3>No items found just yet</h3>
             <p>Try another search or choose a different category.</p>
 
@@ -661,7 +682,7 @@ if (listingStatus !== 'approved') {
                   />
                 ) : (
                   <span className="item-emoji">
-                    {item.emoji || '📦'}
+                    {item.emoji || '\u{1F4E6}'}
                   </span>
                 )}
 
@@ -683,14 +704,26 @@ if (listingStatus !== 'approved') {
                 <div className="card-footer">
                   <strong>
                     {item.price != null
-                      ? `₹${item.price}`
+                      ? `\u20B9${item.price}`
                       : 'Price on request'}
                   </strong>
 
                   <span className="pickup">
-                    📍 {item.pickupPoint || 'Campus pickup'}
+                    {'\u{1F4CD}'} {item.pickupPoint || 'Campus pickup'}
                   </span>
                 </div>
+                {isAdmin && !usingDemo && (
+                  <button
+                    type="button"
+                    className="nav-cta"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleAdminDelete(item);
+                    }}
+                  >
+                    Delete listing
+                  </button>
+                )}
               </div>
             </article>
           ))}
@@ -722,7 +755,7 @@ if (listingStatus !== 'approved') {
             setImageError('');
           }}
         >
-          {showForm ? 'Close form' : '＋ List your item'}
+          {showForm ? 'Close form' : '\u002B List your item'}
         </button>
       </section>
 
@@ -773,7 +806,7 @@ if (listingStatus !== 'approved') {
             </label>
 
             <label>
-              Price (₹)
+              Price ({'\u20B9'})
               <input
                 required
                 name="price"
@@ -812,13 +845,13 @@ if (listingStatus !== 'approved') {
               </label>
 
               <label htmlFor="item-image" className="image-upload-box">
-                <span className="upload-icon">📸</span>
+                <span className="upload-icon">{'\u{1F4F8}'}</span>
                 <strong>
                   {selectedImages.length
                     ? `${selectedImages.length} photos selected`
                     : 'Click to upload photos'}
                 </strong>
-                <span>JPG, PNG, WEBP · Maximum 5 MB each</span>
+                <span>JPG, PNG, WEBP {'\u00B7'} Maximum 5 MB each</span>
 
                 <input
                   ref={imageInputRef}
@@ -853,7 +886,7 @@ if (listingStatus !== 'approved') {
                     className="remove-image-button"
                     onClick={removeSelectedImage}
                   >
-                    ✕ Remove photos
+                    {'\u2715'} Remove photos
                   </button>
                 </div>
               )}
@@ -864,7 +897,7 @@ if (listingStatus !== 'approved') {
               type="submit"
               disabled={submitting}
             >
-              {submitting ? 'Saving item...' : '＋ Publish listing'}
+              {submitting ? 'Saving item...' : '\u002B Publish listing'}
             </button>
           </form>
 
@@ -912,10 +945,14 @@ if (listingStatus !== 'approved') {
         </a>
 
         <p>Made with care for a campus that shares.</p>
-        <span>© Saanjha · Campus reuse community</span>
+        <span>{'\u00A9'} Saanjha {'\u00B7'} Campus reuse community</span>
       </footer>
     </main>
   );
 }
 
 export default HomePage;
+
+
+
+
