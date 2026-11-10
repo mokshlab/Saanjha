@@ -1,5 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const Listing = require('../models/Listing');
+const Reservation = require('../models/Reservation');
 const { auth, studentAuth, adminAuth } = require('../middleware/auth');
 const { uploadMultiple } = require('../middleware/upload');
 const { requiresApprovalChange } = require('../services/listingRules');
@@ -26,6 +27,17 @@ router.get('/moderation/pending', auth, adminAuth, async (req, res) => {
   res.json({ listings: await Listing.find({ status: 'pending' }).populate('seller', 'name email college').sort({ createdAt: -1 }) });
 });
 
+router.get('/admin/all', auth, adminAuth, async (req, res) => {
+  try {
+    const items = await Listing.find({})
+      .populate('seller', 'name college')
+      .sort({ createdAt: -1 });
+
+    res.json({ items, totalItems: items.length });
+  } catch (error) {
+    res.status(500).json({ message: 'Could not fetch listings.' });
+  }
+});
 router.get('/:id', async (req, res) => {
   const item = await Listing.findOne({ _id: req.params.id, status: { $in: ['approved', 'reserved'] } }).populate('seller', 'name college');
   if (!item) return res.status(404).json({ message: 'Listing not found' });
@@ -97,9 +109,23 @@ router.put('/:id/reject', auth, adminAuth, async (req, res) => {
   if (!listing) return res.status(404).json({ message: 'Listing not found' });
   res.json({ message: 'Listing rejected', listing });
 });
+router.delete('/admin/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
 
-module.exports = router;const Reservation = require('../models/Reservation');
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found.' });
+    }
 
+    await listing.deleteOne();
+
+    return res.json({ message: 'Listing deleted successfully by admin.' });
+  } catch (error) {
+    console.error('Admin listing deletion failed:', error.message);
+    return res.status(500).json({ message: 'Could not delete listing.' });
+  }
+});
+module.exports = router;
 router.delete('/:id', auth, studentAuth, async (req, res) => {
   try {
     const listing = await Listing.findOne({
@@ -136,3 +162,4 @@ router.delete('/:id', auth, studentAuth, async (req, res) => {
     return res.status(500).json({ message: 'Could not delete listing.' });
   }
 });
+
