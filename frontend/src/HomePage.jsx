@@ -392,16 +392,14 @@ if (listingStatus !== 'approved') {
       <header className="site-header">
         <a className="brand" href="#home" aria-label="Saanjha home">
           <span className="brand-mark">S</span>
-          <span>
-            Saanjha
-            <small>FROM STUDENT TO STUDENT</small>
-          </span>
+          <span className="brand-name">saanjha</span>
         </a>
 
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#browse">Explore</a>
           <a href="#how-it-works">How it works</a>
 <a href="#about-saanjha">About Us</a>
+          <a href="/contact">Contact Us</a>
           <button
             type="button"
             className="nav-cta"
@@ -910,10 +908,7 @@ if (listingStatus !== 'approved') {
       <footer className="site-footer">
         <a className="brand footer-brand" href="#home">
           <span className="brand-mark">S</span>
-          <span>
-            Saanjha
-            <small>FROM STUDENT TO STUDENT</small>
-          </span>
+          <span className="brand-name">saanjha</span>
         </a>
 
         <p>Made with care for a campus that shares.</p>

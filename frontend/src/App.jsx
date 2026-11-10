@@ -8,6 +8,7 @@ import MyReservations from './pages/MyReservations';
 import MyListings from './pages/MyListings';
 import AdminModeration from './pages/AdminModeration';
 import ProfilePage from './pages/ProfilePage';
+import ContactPage from './pages/ContactPage';
 import { isAuthenticated } from './api';
 
 function ProtectedRoute({ children }) {
@@ -30,7 +31,7 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<HomePage />} />`r`n      <Route path="/contact" element={<ContactPage />} />
 
       <Route path="/register" element={<AuthPage mode="register" />} />
       <Route path="/login" element={<AuthPage mode="login" />} />

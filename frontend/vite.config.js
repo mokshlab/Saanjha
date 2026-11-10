@@ -11,6 +11,7 @@ const localEnvDirectory = path.resolve(
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, localEnvDirectory, 'VITE_')
+  const backendTarget = env.VITE_BACKEND_URL || 'http://127.0.0.1:3101'
 
   return {
     envDir: localEnvDirectory,
@@ -19,11 +20,15 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: Number(env.VITE_FRONTEND_PORT || 5174),
       cors: true,
-      
       allowedHosts: ['tired-fans-allow.loca.lt'],
       proxy: {
         '/api': {
-          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:3101',
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/uploads': {
+          target: backendTarget,
           changeOrigin: true,
           secure: false
         }

@@ -23,6 +23,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/contact', require('./routes/contact'));
 
 app.get('/', (req, res) => res.json({ message: 'Saanjha API is running' }));
 

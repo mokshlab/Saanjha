@@ -641,23 +641,45 @@ footer {
 }
 
 .site-header .brand-mark {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 13px;
-  font-size: 21px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #d94f87 0%, #ed82aa 55%, #f6b5ca 100%);
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 900;
+  font-family: Georgia, serif;
+  box-shadow: 0 7px 18px rgba(217, 79, 135, 0.20);
+  transform: rotate(-5deg);
 }
 
-.site-header .brand small {
-  display: block;
-  margin-top: 4px;
-  font-size: 9px;
-  line-height: 1.3;
-  letter-spacing: 1.2px;
-  font-weight: 700;
+.site-header .brand-name {
+  display: inline-block;
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 29px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: #71334f;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.site-header .brand:hover .brand-name {
+  color: #d94f87;
+  transform: translateX(2px);
+}
+
+.site-header .brand-name {
+  display: inline-block;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+  line-height: 1;
+  color: #71334f;
 }
 
 
@@ -756,24 +778,45 @@ body {
 }
 
 .site-header .brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 15px;
-  background: var(--saanjha-mint);
-  color: var(--saanjha-green);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #d94f87 0%, #ed82aa 55%, #f6b5ca 100%);
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 900;
+  font-family: Georgia, serif;
+  box-shadow: 0 7px 18px rgba(217, 79, 135, 0.20);
   transform: rotate(-5deg);
 }
 
-.site-header .brand small {
-  display: block;
-  margin-top: 5px;
-  font-size: 9px;
-  letter-spacing: 1.2px;
+.site-header .brand-name {
+  display: inline-block;
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 29px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: #71334f;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.site-header .brand:hover .brand-name {
+  color: #d94f87;
+  transform: translateX(2px);
+}
+
+.site-header .brand-name {
+  display: inline-block;
+  font-size: 25px;
   font-weight: 800;
+  letter-spacing: -1.2px;
+  line-height: 1;
+  color: #71334f;
 }
 
 .main-nav {
@@ -1525,12 +1568,19 @@ body {
 }
 
 .footer-brand .brand-mark {
-  display: inline-grid;
-  width: 39px;
-  height: 39px;
-  place-items: center;
+  width: 40px;
+  height: 40px;
   border-radius: 13px;
-  background: var(--saanjha-mint);
+  background: linear-gradient(135deg, #d94f87, #f0a0bc);
+  color: #ffffff;
+  box-shadow: none;
+  transform: none;
+}
+.footer-brand .brand-name {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #71334f;
 }
 
 .footer-brand small {
@@ -3502,5 +3552,248 @@ body {
     display: inline-flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+}
+
+.footer-brand .brand-name {
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.footer-brand:hover .brand-name {
+  color: #d94f87;
+  transform: translateX(3px);
+}
+
+.footer-brand:hover .brand-mark {
+  transform: rotate(-5deg) scale(1.06);
+  box-shadow: 0 5px 14px rgba(217, 79, 135, 0.20);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.site-header .brand-name,
+.footer-brand .brand-name {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 29px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+/* Saanjha Contact Page */
+.contact-page {
+  min-height: 100vh;
+  background: #fff8fa;
+  color: #71334f;
+}
+
+.contact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px clamp(20px, 6vw, 80px);
+  background: #ffffff;
+  border-bottom: 1px solid #f5dce6;
+}
+
+.contact-header .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+.contact-header .brand-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d94f87, #f0a0bc);
+  color: white;
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.contact-header .brand-name {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 29px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  color: #71334f;
+}
+
+.contact-back-link {
+  color: #a34c70;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.contact-back-link:hover {
+  color: #d94f87;
+}
+
+.contact-content {
+  width: min(1100px, 90%);
+  margin: 65px auto;
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 65px;
+  align-items: center;
+}
+
+.contact-eyebrow {
+  color: #d94f87;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.contact-intro h1 {
+  margin: 16px 0;
+  font-size: clamp(42px, 6vw, 65px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+}
+
+.contact-intro h1 span {
+  color: #e477a0;
+}
+
+.contact-intro > p,
+.contact-note p {
+  color: #987487;
+  line-height: 1.8;
+}
+
+.contact-note {
+  display: flex;
+  gap: 15px;
+  margin-top: 35px;
+  padding: 20px;
+  border-radius: 18px;
+  background: #fceaf1;
+}
+
+.contact-note-icon {
+  font-size: 28px;
+  color: #d94f87;
+}
+
+.contact-note strong {
+  color: #71334f;
+}
+
+.contact-note p {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
+
+.contact-form {
+  padding: 35px;
+  border: 1px solid #f4dce6;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 15px 45px rgba(113, 51, 79, 0.08);
+}
+
+.contact-form h2 {
+  margin: 0 0 8px;
+  color: #71334f;
+  font-size: 25px;
+}
+
+.contact-form-subtitle {
+  margin: 0 0 25px;
+  color: #a48796;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.contact-form label {
+  display: block;
+  margin: 17px 0 8px;
+  color: #71334f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #f0dce5;
+  border-radius: 11px;
+  background: #fffafd;
+  color: #71334f;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  border-color: #e477a0;
+  box-shadow: 0 0 0 3px rgba(228, 119, 160, 0.12);
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.contact-submit {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d94f87, #ed82aa);
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.contact-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(217, 79, 135, 0.22);
+}
+
+.contact-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.contact-status {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fceaf1;
+  color: #71334f;
+  font-size: 13px;
+}
+
+.contact-footer {
+  padding: 25px;
+  text-align: center;
+  color: #a48796;
+  font-size: 13px;
+}
+
+.contact-footer span {
+  color: #d94f87;
+}
+
+@media (max-width: 700px) {
+  .contact-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin: 40px auto;
+  }
+
+  .contact-form {
+    padding: 24px 20px;
   }
 }
