@@ -38,12 +38,58 @@ The current build includes:
 - Seller-owned My Listings retrieval and editing
 - Listing approval rules for sensitive edits
 - API-connected admin moderation for pending listings and approve/reject actions
+- Admin listing management, including viewing all listings and deleting listings
+- Protected seller listing deletion for reserved or sold items
+- Contact page and backend contact-message route
 - Atomic reservation and one-active-reservation enforcement
 - Reservation duration presets, expiry, cancellation, notifications, and handover confirmation
 - Item journey history, focused backend tests, and a concurrency experiment runner
 - Optional Cloudinary media storage with local development fallback
 
-The main remaining integration work is connecting the frontend reservation and handover views fully to the backend. Admin moderation is now API-connected but remains under review until the owning teammate verifies it end to end.
+The frontend reservation and handover views still need complete end-to-end verification. Do not describe the full evaluator journey as complete until expiry, notification, and handover are tested through the real application.
+
+## Final Evaluation Guide
+
+### Current verified results
+
+The owner has manually verified:
+
+1. Registration with the configured campus email domain.
+2. OTP reading from the backend terminal fallback.
+3. OTP verification, login, and logout.
+4. Listing submission with two images and price `0`.
+5. Listing visibility under **My Listings**.
+6. Sensitive listing edits returning to pending approval.
+7. Admin approval.
+8. Desktop and mobile layouts.
+9. Reservation and cancellation.
+
+### Still pending before final evaluation
+
+Verify these in the real application:
+
+- Reservation expiry releases the listing.
+- The buyer receives or can see the expiry/cancellation notification.
+- The handover code works for the seller.
+- Successful handover changes the listing to sold and records the item journey.
+- The complete reservation and handover screens work through the frontend, not only through API tests.
+
+### Simple final test workflow
+
+1. Start the backend with `cd backend` and `npm run dev`.
+2. Start the frontend in a second terminal with `cd frontend` and `npm run dev`.
+3. Register with an allowed campus email and read the OTP from the backend terminal.
+4. Log in, submit a listing with two images and price `0`, and confirm it appears in **My Listings**.
+5. Edit a sensitive field and confirm the listing becomes pending again.
+6. Log in as admin and approve the listing.
+7. Use a second student account to reserve the listing.
+8. Confirm the reservation duration, contact/pickup visibility, and cancellation behavior.
+9. Run a short expiry test and confirm the listing becomes available again with a notification.
+10. Reserve again, complete the handover using the code, and confirm the listing becomes sold.
+11. Run backend checks with `cd backend` and `npm test`.
+12. Run the frontend production check with `cd frontend` and `npm run build`.
+
+Record each result as **PASS**, **FAIL**, or **BLOCKED**. Only the complete path through step 10 should be presented as fully complete.
 
 ## Scope
 
