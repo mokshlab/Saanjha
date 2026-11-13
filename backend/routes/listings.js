@@ -50,13 +50,28 @@ router.post('/', auth, studentAuth, uploadMultiple('images', 50), async (req, re
     return res.status(400).json({ message: 'Title, description, price, category, condition, and pickup point are required' });
   }
   if (!req.files || req.files.length < 2) return res.status(400).json({ message: 'At least two images are required' });
+
+  const numericPrice = Number(price);
+  if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+    return res.status(400).json({ message: 'Price must be a valid non-negative number' });
+  }
+
+  let parsedBookDetails;
+  let parsedTags;
+  try {
+    parsedBookDetails = bookDetails ? JSON.parse(bookDetails) : undefined;
+    parsedTags = tags ? JSON.parse(tags) : [];
+  } catch (error) {
+    return res.status(400).json({ message: 'Book details and tags must be valid JSON' });
+  }
+
   const images = await storeListingImages(req.files || []);
   const listing = await Listing.create({
-    title, description, price: Number(price), category, condition, pickupPoint,
+    title, description, price: numericPrice, category, condition, pickupPoint,
     seller: req.user._id,
     images,
-    bookDetails: bookDetails ? JSON.parse(bookDetails) : undefined,
-    tags: tags ? JSON.parse(tags) : []
+    bookDetails: parsedBookDetails,
+    tags: parsedTags
   });
   res.status(201).json({ message: 'Listing submitted for approval', listing });
 });
@@ -78,7 +93,12 @@ router.put('/:id', auth, studentAuth, uploadMultiple('images', 50), async (req, 
   if (!Object.keys(changes).length && !replacingImages) return res.status(400).json({ message: 'No listing changes were provided' });
 
   try {
-    if (changes.price !== undefined) changes.price = Number(changes.price);
+    if (changes.price !== undefined) {
+      changes.price = Number(changes.price);
+      if (!Number.isFinite(changes.price) || changes.price < 0) {
+        return res.status(400).json({ message: 'Price must be a valid non-negative number' });
+      }
+    }
     if (changes.bookDetails !== undefined && typeof changes.bookDetails === 'string') changes.bookDetails = JSON.parse(changes.bookDetails);
     if (changes.tags !== undefined && typeof changes.tags === 'string') changes.tags = JSON.parse(changes.tags);
   } catch (error) {
@@ -99,14 +119,34 @@ router.put('/:id', auth, studentAuth, uploadMultiple('images', 50), async (req, 
 });
 
 router.put('/:id/approve', auth, adminAuth, async (req, res) => {
-  const listing = await Listing.findByIdAndUpdate(req.params.id, { status: 'approved', approvedBy: req.user._id, approvedAt: new Date(), rejectionReason: undefined }, { new: true });
-  if (!listing) return res.status(404).json({ message: 'Listing not found' });
+  const currentListing = await Listing.findById(req.params.id);
+  if (!currentListing) return res.status(404).json({ message: 'Listing not found' });
+  if (['reserved', 'sold', 'inactive'].includes(currentListing.status)) {
+    return res.status(409).json({ message: 'This listing cannot be approved in its current state' });
+  }
+
+  const listing = await Listing.findOneAndUpdate(
+    { _id: req.params.id, status: { $nin: ['reserved', 'sold', 'inactive'] } },
+    { status: 'approved', approvedBy: req.user._id, approvedAt: new Date(), rejectionReason: undefined },
+    { new: true }
+  );
+  if (!listing) return res.status(409).json({ message: 'Listing is no longer available for approval' });
   res.json({ message: 'Listing approved', listing });
 });
 
 router.put('/:id/reject', auth, adminAuth, async (req, res) => {
-  const listing = await Listing.findByIdAndUpdate(req.params.id, { status: 'rejected', rejectionReason: req.body.reason || 'Rejected by administrator' }, { new: true });
-  if (!listing) return res.status(404).json({ message: 'Listing not found' });
+  const currentListing = await Listing.findById(req.params.id);
+  if (!currentListing) return res.status(404).json({ message: 'Listing not found' });
+  if (['reserved', 'sold', 'inactive'].includes(currentListing.status)) {
+    return res.status(409).json({ message: 'This listing cannot be rejected in its current state' });
+  }
+
+  const listing = await Listing.findOneAndUpdate(
+    { _id: req.params.id, status: { $nin: ['reserved', 'sold', 'inactive'] } },
+    { status: 'rejected', rejectionReason: req.body.reason || 'Rejected by administrator' },
+    { new: true }
+  );
+  if (!listing) return res.status(409).json({ message: 'Listing is no longer available for rejection' });
   res.json({ message: 'Listing rejected', listing });
 });
 router.delete('/admin/:id', auth, adminAuth, async (req, res) => {

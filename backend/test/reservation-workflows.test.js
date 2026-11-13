@@ -2,17 +2,19 @@ const assert = require('node:assert/strict');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const test = require('node:test');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const Listing = require('../models/Listing');
 const Reservation = require('../models/Reservation');
 const Notification = require('../models/Notification');
 const ItemJourney = require('../models/ItemJourney');
-const { expireReservations } = require('../routes/reservations');
+const { expireReservations, withTransaction } = require('../routes/reservations');
 
 let memoryServer;
 
 test.before(async () => {
-  memoryServer = await MongoMemoryServer.create();
+  memoryServer = await MongoMemoryReplSet.create({
+    replSet: { count: 1 }
+  });
   await mongoose.connect(memoryServer.getUri('saanjha-reservation-tests'));
   await Promise.all([
     Listing.init(),
@@ -110,4 +112,38 @@ test('expiry releases the listing and records journey and notification', async (
   assert.equal(expiredReservation.status, 'expired');
   assert.ok(journey);
   assert.ok(notification);
+});
+
+test('failed reservation transaction rolls back listing and reservation changes', async () => {
+  const data = reservationData();
+  await Listing.create({
+    _id: data.listing,
+    title: 'Rollback item',
+    description: 'Test listing',
+    price: 0,
+    category: 'books',
+    condition: 'good',
+    images: ['one.jpg', 'two.jpg'],
+    seller: data.seller,
+    pickupPoint: 'Test point',
+    status: 'approved',
+  });
+
+  await assert.rejects(
+    withTransaction(async (session) => {
+      await Listing.findOneAndUpdate(
+        { _id: data.listing, status: 'approved' },
+        { status: 'reserved', reservedBy: data.buyer },
+        { session }
+      );
+      await Reservation.create([data], { session });
+      throw new Error('forced transaction failure');
+    }),
+    /forced transaction failure/
+  );
+
+  const listing = await Listing.findById(data.listing);
+  assert.equal(listing.status, 'approved');
+  assert.equal(listing.reservedBy, undefined);
+  assert.equal(await Reservation.countDocuments({ listing: data.listing }), 0);
 });
