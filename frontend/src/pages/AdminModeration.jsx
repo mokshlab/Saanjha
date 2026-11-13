@@ -1,7 +1,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import api from '../api';
+import Navbar from '../components/Navbar';
 
 function displayStatus(status) {
   const value = String(status || 'pending');
@@ -9,6 +10,7 @@ function displayStatus(status) {
 }
 
 function AdminModeration() {
+  const location = useLocation();
   const [listings, setListings] = useState([]);
   const [filter, setFilter] = useState('Pending');
   const [search, setSearch] = useState('');
@@ -17,9 +19,9 @@ function AdminModeration() {
   useEffect(() => {
     let active = true;
 
-    api.get('/listings/moderation/pending')
+    api.get('/listings/admin/all')
       .then((response) => {
-        if (active) setListings(response.data.listings || []);
+        if (active) setListings(response.data.items || []);
       })
       .catch((error) => {
         if (active) setMessage(error.response?.data?.message || 'Could not load pending listings.');
@@ -29,6 +31,20 @@ function AdminModeration() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const targetId = location.hash.slice(1);
+    if (!targetId) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.hash]);
 
   async function updateStatus(item, status) {
     try {
@@ -77,8 +93,10 @@ function AdminModeration() {
   const tabs = ['All', 'Pending', 'Approved', 'Rejected'];
 
   return (
-    <main className="admin-page">
-      <header className="admin-header">
+    <>
+      <Navbar variant="admin" />
+      <main className="admin-page">
+        <header className="admin-header admin-page-heading">
         <div>
           <p className="admin-eyebrow">SAANJHA • ADMIN WORKSPACE</p>
           <h1>Listing Moderation</h1>
@@ -86,10 +104,7 @@ function AdminModeration() {
             Review student listings and help keep your campus marketplace trustworthy.
           </p>
         </div>
-        <Link to="/" className="admin-back-link">
-          ← Back to marketplace
-        </Link>
-      </header>
+        </header>
 
       <section className="admin-welcome">
         <div>
@@ -100,7 +115,7 @@ function AdminModeration() {
         <div className="admin-welcome-icon" aria-hidden="true">🌿</div>
       </section>
 
-      <section className="admin-stats" aria-label="Listing statistics">
+      <section id="admin-overview" className="admin-stats" aria-label="Listing statistics">
         <article className="admin-stat-card">
           <span className="admin-stat-icon">📋</span>
           <p>Total listings</p>
@@ -127,7 +142,7 @@ function AdminModeration() {
         </article>
       </section>
 
-      <section className="admin-listings-section">
+      <section id="admin-review-queue" className="admin-listings-section">
         <div className="admin-section-heading">
           <div>
             <h2>Submitted listings</h2>
@@ -235,7 +250,7 @@ function AdminModeration() {
                       <button
                         type="button"
                         className="admin-approve-button"
-                        disabled={!item._id || status === 'Approved'}
+                        disabled={!item._id || ['Approved', 'Reserved', 'Sold', 'Inactive'].includes(status)}
                         onClick={() => updateStatus(item, 'Approved')}
                       >
                         ✓ Approve
@@ -243,7 +258,7 @@ function AdminModeration() {
                       <button
                         type="button"
                         className="admin-reject-button"
-                        disabled={!item._id || status === 'Rejected'}
+                        disabled={!item._id || ['Rejected', 'Reserved', 'Sold', 'Inactive'].includes(status)}
                         onClick={() => updateStatus(item, 'Rejected')}
                       >
                         ✕ Reject
@@ -261,7 +276,8 @@ function AdminModeration() {
         <span aria-hidden="true">🌿</span>
         Saanjha — reuse more, waste less.
       </footer>
-    </main>
+      </main>
+    </>
   );
 }
 

@@ -6,6 +6,8 @@ import {
   useParams,
 } from 'react-router-dom';
 import { useState } from 'react';
+import api, { isAuthenticated } from '../api';
+import Navbar from '../components/Navbar';
 
 function getLocalListing(id) {
   try {
@@ -23,26 +25,6 @@ function getLocalListing(id) {
   } catch {
     return null;
   }
-}
-
-function getReservations() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem('saanjhaReservations') || '[]'
-    );
-
-    return Array.isArray(saved) ? saved : [];
-  } catch {
-    return [];
-  }
-}
-
-function hasActiveReservation(id) {
-  return getReservations().some(
-    (reservation) =>
-      String(reservation.itemId) === String(id) &&
-      reservation.status !== 'Cancelled'
-  );
 }
 
 export default function ListingDetails() {
@@ -77,24 +59,28 @@ export default function ListingDetails() {
     Boolean(ownerEmail) &&
     currentUserEmail === ownerEmail;
 
-  const [alreadyReserved, setAlreadyReserved] = useState(
-    () => hasActiveReservation(id)
-  );
+  const [durationHours, setDurationHours] = useState(54);
+  const [alreadyReserved, setAlreadyReserved] = useState(false);
+  const [reservationMessage, setReservationMessage] = useState('');
+  const [reserving, setReserving] = useState(false);
 
   if (!item) {
     return (
-      <main className="listing-details-page">
-        <h2>Listing not available</h2>
-        <p>
-          This item may have been removed, or its details are not
-          available in this browser.
-        </p>
-        <Link to="/">← Back to listings</Link>
-      </main>
+      <>
+        <Navbar />
+        <main className="listing-details-page">
+          <h2>Listing not available</h2>
+          <p>
+            This item may have been removed, or its details are not
+            available in this browser.
+          </p>
+          <Link to="/">← Back to listings</Link>
+        </main>
+      </>
     );
   }
 
-  function handleReservation() {
+  async function handleReservation() {
     // Extra check in the click handler as well.
     if (isOwner) {
       window.alert("You can't reserve your own listing.");
@@ -102,83 +88,39 @@ export default function ListingDetails() {
     }
 
     // Require the user to log in before reserving.
-    if (localStorage.getItem('saanjhaLoggedIn') !== 'true') {
+    if (!isAuthenticated()) {
       navigate('/login');
       return;
     }
 
+    setReserving(true);
+    setReservationMessage('');
     try {
-      const reservations = getReservations();
-
-      const existingReservation = reservations.find(
-        (reservation) =>
-          String(reservation.itemId) === String(item._id) &&
-          reservation.status !== 'Cancelled'
-      );
-
-      // Reuse an existing reservation and its original code.
-      if (existingReservation) {
-        setAlreadyReserved(true);
-
-        navigate(`/reservation-confirmation/${item._id}`, {
-          state: {
-            item,
-            reservation: existingReservation,
-          },
-        });
-
-        return;
-      }
-
-      // Generate a code once for this new reservation.
-      const handoverCode = String(
-        Math.floor(1000 + Math.random() * 9000)
-      );
-
-      const reservation = {
-        reservationId: `RES-${Date.now()}`,
-        itemId: String(item._id),
-        itemTitle: item.title || 'Reserved item',
-        price: item.price ?? null,
-        pickupPoint: item.pickupPoint || 'Campus pickup',
-        category: item.category || 'Other',
-        description: item.description || '',
-        emoji: item.emoji || '📦',
-        images: item.images || [],
-        status: 'Reserved',
-        handoverCode,
-        handoverStatus: 'Pending',
-        createdAt: new Date().toISOString(),
-      };
-
-      // Save before navigating so My Reservations can read it.
-      const updatedReservations = [
-        ...reservations,
-        reservation,
-      ];
-
-      localStorage.setItem(
-        'saanjhaReservations',
-        JSON.stringify(updatedReservations)
-      );
-
+      const response = await api.post(`/reservations/${item._id}`, {
+        durationHours,
+      });
+      const reservation = response.data.reservation;
       setAlreadyReserved(true);
-
       navigate(`/reservation-confirmation/${item._id}`, {
         state: {
           item,
           reservation,
+          handoverCode: response.data.handoverCode,
         },
       });
-    } catch {
-      window.alert(
-        'Could not save your reservation. Please try again.'
+    } catch (error) {
+      setReservationMessage(
+        error.response?.data?.message || 'Could not reserve this listing.'
       );
+    } finally {
+      setReserving(false);
     }
   }
 
   return (
-    <main className="listing-details-page">
+    <>
+      <Navbar />
+      <main className="listing-details-page">
       <Link to="/" className="details-back-link">
         ← Back to listings
       </Link>
@@ -234,12 +176,37 @@ export default function ListingDetails() {
                 type="button"
                 className="primary-button"
                 onClick={handleReservation}
-                disabled={alreadyReserved}
+                disabled={alreadyReserved || reserving}
               >
-                {alreadyReserved
+                {reserving
+                  ? 'Reserving...'
+                  : alreadyReserved
                   ? 'Already Reserved ✓'
                   : 'Reserve Item'}
               </button>
+
+              {!alreadyReserved && (
+                <label>
+                  Reservation duration
+                  <select
+                    value={durationHours}
+                    onChange={(event) =>
+                      setDurationHours(Number(event.target.value))
+                    }
+                    disabled={reserving}
+                  >
+                    {[3, 6, 12, 24, 36, 54, 72, 96].map((hours) => (
+                      <option key={hours} value={hours}>
+                        {hours} hours
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {reservationMessage && (
+                <p role="alert">{reservationMessage}</p>
+              )}
 
               {alreadyReserved && (
                 <p role="status">
@@ -254,6 +221,7 @@ export default function ListingDetails() {
           )}
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

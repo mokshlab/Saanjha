@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import api from '../api';
+import Navbar from '../components/Navbar';
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -33,15 +33,9 @@ export default function ContactPage() {
   }
 
   return (
-    <main className="contact-page">
-      <header className="contact-header">
-        <Link className="brand" to="/" aria-label="Saanjha home">
-          <span className="brand-mark">S</span>
-          <span className="brand-name">saanjha</span>
-        </Link>
-        <Link className="contact-back-link" to="/">Back to home</Link>
-      </header>
-
+    <>
+      <Navbar />
+      <main className="contact-page">
       <section className="contact-content">
         <div className="contact-intro">
           <span className="contact-eyebrow">WE'RE HERE TO HELP</span>
@@ -88,6 +82,7 @@ export default function ContactPage() {
       </section>
 
       <footer className="contact-footer">Made with care for a campus that shares. <span>?</span></footer>
-    </main>
+      </main>
+    </>
   );
 }

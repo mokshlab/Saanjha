@@ -1,6 +1,8 @@
 
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import api from '../api';
+import Navbar from '../components/Navbar';
 
 export default function ReservationConfirmation() {
   const { id } = useParams();
@@ -12,72 +14,28 @@ export default function ReservationConfirmation() {
   const passedItem = state?.item;
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem('saanjhaReservations') || '[]'
-      );
-
-      const reservations = Array.isArray(saved) ? saved : [];
-
-      let current =
-        passedReservation ||
-        reservations.find(
-          (entry) =>
-            String(entry.itemId) === String(id) &&
-            entry.status !== 'Cancelled'
-        ) ||
-        reservations.find(
-          (entry) => String(entry.itemId) === String(id)
-        );
-
-      if (!current) {
-        setSavedReservation(null);
-        return;
-      }
-
-      // Preserve the existing code; generate one only when missing.
-      const updatedReservation = {
-        ...current,
-        itemId: String(current.itemId || id),
-        itemTitle: current.itemTitle || passedItem?.title || 'Reserved item',
-        price: current.price ?? passedItem?.price,
-        pickupPoint:
-          current.pickupPoint || passedItem?.pickupPoint || 'Campus pickup',
-        category: current.category || passedItem?.category || 'Other',
-        description: current.description || passedItem?.description || '',
-        emoji: current.emoji || passedItem?.emoji || '📦',
-        images: current.images || passedItem?.images || [],
-        handoverCode:
-          current.status === 'Cancelled'
-            ? current.handoverCode || ''
-            : current.handoverCode ||
-              String(Math.floor(1000 + Math.random() * 9000)),
-        handoverStatus: current.handoverStatus || 'Pending',
-      };
-
-      const alreadyExists = reservations.some(
-        (entry) =>
-          entry.reservationId === updatedReservation.reservationId
-      );
-
-      const updatedReservations = alreadyExists
-        ? reservations.map((entry) =>
-            entry.reservationId === updatedReservation.reservationId
-              ? updatedReservation
-              : entry
-          )
-        : [...reservations, updatedReservation];
-
-      localStorage.setItem(
-        'saanjhaReservations',
-        JSON.stringify(updatedReservations)
-      );
-
-      setSavedReservation(updatedReservation);
-    } catch {
-      setSavedReservation(null);
+    if (passedReservation) {
+      setSavedReservation(passedReservation);
+      return undefined;
     }
-  }, [id, passedReservation, passedItem]);
+
+    let active = true;
+    api.get('/reservations/mine')
+      .then((response) => {
+        if (!active) return;
+        const current = (response.data.reservations || []).find(
+          (entry) => String(entry.listing?._id) === String(id)
+        );
+        setSavedReservation(current || null);
+      })
+      .catch(() => {
+        if (active) setSavedReservation(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, passedReservation]);
 
   const reservation = savedReservation || passedReservation;
 
@@ -85,37 +43,41 @@ export default function ReservationConfirmation() {
     passedItem ||
     (reservation
       ? {
-          _id: reservation.itemId,
-          title: reservation.itemTitle,
-          price: reservation.price,
-          pickupPoint: reservation.pickupPoint,
-          category: reservation.category || 'Other',
-          description: reservation.description || '',
-          emoji: reservation.emoji || '📦',
-          images: reservation.images || [],
+          _id: reservation.listing?._id || id,
+          title: reservation.listing?.title || passedItem?.title,
+          price: reservation.listing?.price ?? passedItem?.price,
+          pickupPoint: reservation.listing?.pickupPoint || passedItem?.pickupPoint,
+          category: reservation.listing?.category || passedItem?.category || 'Other',
+          description: reservation.listing?.description || passedItem?.description || '',
+          images: reservation.listing?.images || passedItem?.images || [],
         }
       : null);
 
   if (!item || String(item._id) !== String(id)) {
     return (
-      <main className="reservation-page">
-        <div className="reservation-card">
-          <h1>Reservation not found</h1>
-          <p>
-            We couldn't find a saved reservation for this item.
-            Please return to the listings and reserve it again.
-          </p>
-          <Link to="/" className="reservation-back-link">
-            ← Back to listings
-          </Link>
-        </div>
-      </main>
+      <>
+        <Navbar />
+        <main className="reservation-page">
+          <div className="reservation-card">
+            <h1>Reservation not found</h1>
+            <p>
+              We couldn't find a saved reservation for this item.
+              Please return to the listings and reserve it again.
+            </p>
+            <Link to="/" className="reservation-back-link">
+              ← Back to listings
+            </Link>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="reservation-page">
-      <section className="reservation-card">
+    <>
+      <Navbar />
+      <main className="reservation-page">
+        <section className="reservation-card">
         <div className="reservation-success-icon">✓</div>
 
         <p className="reservation-eyebrow">SAANJHA · CAMPUS REUSE</p>
@@ -148,7 +110,7 @@ export default function ReservationConfirmation() {
         <div className="reservation-details">
           <div>
             <span>Reservation ID</span>
-            <strong>{reservation?.reservationId || `RES-${id}`}</strong>
+            <strong>{reservation?._id || `RES-${id}`}</strong>
           </div>
 
           <div>
@@ -159,18 +121,24 @@ export default function ReservationConfirmation() {
           <div>
             <span>Reservation status</span>
             <strong className="reservation-status">
-              {reservation?.status || 'Reserved'} · Demo
+              {reservation?.status || 'active'}
             </strong>
           </div>
+          {reservation?.expiresAt && (
+            <div>
+              <span>Expires</span>
+              <strong>{new Date(reservation.expiresAt).toLocaleString()}</strong>
+            </div>
+          )}
         </div>
 
-        {reservation?.status !== 'Cancelled' &&
-          reservation?.handoverCode && (
+        {reservation?.status === 'active' &&
+          (state?.handoverCode || reservation?.handoverCode) && (
             <div className="handover-code-panel">
               <p className="reservation-eyebrow">HANDOVER VERIFICATION</p>
               <h2>Your 4-digit handover code</h2>
               <p className="handover-code">
-                {reservation.handoverCode}
+                {state?.handoverCode || reservation.handoverCode}
               </p>
               <p>
                 Keep this code private and share it with the item owner
@@ -178,15 +146,14 @@ export default function ReservationConfirmation() {
               </p>
               <p>
                 Handover status:{' '}
-                <strong>{reservation.handoverStatus || 'Pending'}</strong>
+                <strong>Pending</strong>
               </p>
             </div>
           )}
 
         <p className="reservation-note">
-          This is a frontend demo. Reservation details and the handover
-          code are stored in this browser only; no seller notification
-          or secure server-side verification has occurred.
+          Keep the handover code private and share it with the item owner
+          when you meet to collect the item.
         </p>
 
         <Link to="/my-reservations" className="reservation-home-button">
@@ -198,7 +165,8 @@ export default function ReservationConfirmation() {
             Back to listings
           </Link>
         </p>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

@@ -1,9 +1,11 @@
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './index.css';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import SustainabilitySection from './components/SustainabilitySection';
-import api, { clearSession, isAuthenticated, getStoredUser } from './api';
+import ListingForm from './components/ListingForm';
+import Navbar from './components/Navbar';
+import api, { getStoredUser } from './api';
 
 const demoListings = [
   {
@@ -89,11 +91,7 @@ const categories = [
 ];
 
 function HomePage() {
-  const [loggedInName, setLoggedInName] = useState(() => {
-  return localStorage.getItem('saanjhaLoggedIn') === 'true'
-    ? localStorage.getItem('saanjhaName') || ''
-    : '';
-});
+  const location = useLocation();
   const navigate = useNavigate();
 const isAdmin = getStoredUser()?.role === 'admin';
 
@@ -107,13 +105,7 @@ const isAdmin = getStoredUser()?.role === 'admin';
   const [status, setStatus] = useState('Loading listings...');
   const [usingDemo, setUsingDemo] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formMessage, setFormMessage] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [imageError, setImageError] = useState('');
-  const imageInputRef = useRef(null);
+  const [scrollToForm, setScrollToForm] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -141,19 +133,42 @@ const isAdmin = getStoredUser()?.role === 'admin';
     return () => {
       active = false;
     };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (!selectedImages.length) {
-      setImagePreviews([]);
-      return undefined;
-    }
+    if (!location.state?.openListingForm) return;
 
-    const previewUrls = selectedImages.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previewUrls);
+    setShowForm(true);
+    setScrollToForm(true);
+  }, [location.state]);
 
-    return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
-  }, [selectedImages]);
+  useEffect(() => {
+    const targetId = location.hash.slice(1);
+    if (!targetId) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.hash]);
+
+  useEffect(() => {
+    if (!showForm || !scrollToForm) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('form-title')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      setScrollToForm(false);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [scrollToForm, showForm]);
 
   const filteredListings = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -253,7 +268,7 @@ if (!isAdmin && listingStatus !== 'approved') {
     }
 
     return filtered;
-  }, [listings, search, category, minPrice, maxPrice, sortBy]);
+  }, [listings, search, category, minPrice, maxPrice, sortBy, isAdmin]);
 
   function clearFilters() {
     setSearch('');
@@ -263,119 +278,6 @@ if (!isAdmin && listingStatus !== 'approved') {
     setSortBy('default');
   }
 
-  function handleImageChange(event) {
-    const files = Array.from(event.target.files || []);
-
-    setImageError('');
-    setFormMessage('');
-
-    if (!files.length) return;
-
-    if (files.some((file) => !file.type.startsWith('image/'))) {
-      setSelectedImages([]);
-      setImageError('Please choose a valid image file.');
-      event.target.value = '';
-      return;
-    }
-
-    if (files.some((file) => file.size > 5 * 1024 * 1024)) {
-      setSelectedImages([]);
-      setImageError(
-        'Each image must be 5 MB or smaller.'
-      );
-      event.target.value = '';
-      return;
-    }
-
-    if (files.length < 2) {
-      setSelectedImages(files);
-      setImageError('Choose at least two images for a listing.');
-      return;
-    }
-
-    setSelectedImages(files);
-  }
-
-  function removeSelectedImage() {
-    setSelectedImages([]);
-    setImageError('');
-
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
-    }
-  }
-
-  async function handleListingSubmit(event) {
-    event.preventDefault();
-
-    if (submitting) return;
-
-    setSubmitting(true);
-    setFormMessage('');
-    setImageError('');
-
-    try {
-      const form = event.currentTarget;
-      const formData = new FormData(form);
-
-      const title = String(formData.get('title') || '').trim();
-      const itemCategory = String(formData.get('category') || 'books').toLowerCase();
-      const condition = String(formData.get('condition') || 'good').toLowerCase();
-      const price = Number(formData.get('price'));
-      const pickupPoint = String(
-        formData.get('pickupPoint') || ''
-      ).trim();
-      const description = String(
-        formData.get('description') || ''
-      ).trim();
-
-      if (
-        !title ||
-        !pickupPoint ||
-        !description ||
-        !Number.isFinite(price) ||
-        price < 0 ||
-        !isAuthenticated()
-      ) {
-        setFormMessage(
-          isAuthenticated()
-            ? 'Please enter all required details and a valid price.'
-            : 'Please log in before publishing a listing.'
-        );
-        return;
-      }
-
-      if (selectedImages.length < 2) {
-        setImageError('Choose at least two images for a listing.');
-        return;
-      }
-
-      formData.set('category', itemCategory);
-      formData.set('condition', condition);
-      await api.post('/listings', formData);
-
-      // Reset search, price filters and sorting so the new item is visible.
-      clearFilters();
-
-      form.reset();
-      setSelectedImages([]);
-
-      if (imageInputRef.current) {
-        imageInputRef.current.value = '';
-      }
-
-      setFormMessage('Your listing has been submitted for admin review.');
-
-      document.getElementById('browse')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    } catch (error) {
-      setFormMessage(error.response?.data?.message || 'Could not submit the listing.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
 async function handleAdminDelete(item) {
   const confirmed = window.confirm(
     `Are you sure you want to permanently delete "${item.title}"?`
@@ -399,71 +301,12 @@ async function handleAdminDelete(item) {
 }
   function openListingForm() {
     setShowForm(true);
-
-    window.setTimeout(() => {
-      document.getElementById('sell')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }, 0);
+    setScrollToForm(true);
   }
 
   return (
     <main className="app-shell">
-      <header className="site-header">
-        <a className="brand" href="#home" aria-label="Saanjha home">
-          <span className="brand-mark">S</span>
-          <span className="brand-name">saanjha</span>
-        </a>
-
-        <nav className="main-nav" aria-label="Main navigation">
-          <a href="#browse">Explore</a>
-          <a href="#how-it-works">How it works</a>
-<a href="#about-saanjha">About Us</a>
-          <a href="/contact">Contact Us</a>
-          <button
-            type="button"
-            className="nav-cta"
-            onClick={openListingForm}
-          >
-            + List an item
-          </button>
-
-         
-
-<a href="/my-reservations">My Reservations</a>
-<a href="/my-listings">My Listings</a>
-<a href="/profile">My Profile</a>
-<a href="/admin-moderation">Admin Moderation</a>
-
-{loggedInName ? (
-  <>
-    <a className="nav-login" href="/profile">
-      Hi, {loggedInName}
-    </a>
-    <button
-      type="button"
-      className="nav-cta"
-      onClick={() => {
-        clearSession();
-        setLoggedInName('');
-        navigate('/');
-      }}
-    >
-      Log out
-    </button>
-  </>
-) : (
-  <>
-    <a className="nav-login" href="/login">Login</a>
-    <a className="nav-signup" href="/register">Sign Up</a>
-  </>
-)}
-
-
-
-        </nav>
-      </header>
+      <Navbar onListItem={openListingForm} />
 
       <section className="hero" id="home">
         <div className="hero-copy">
@@ -751,8 +594,6 @@ async function handleAdminDelete(item) {
           className="primary-button"
           onClick={() => {
             setShowForm((previous) => !previous);
-            setFormMessage('');
-            setImageError('');
           }}
         >
           {showForm ? 'Close form' : '\u002B List your item'}
@@ -760,153 +601,7 @@ async function handleAdminDelete(item) {
       </section>
 
       {showForm && (
-        <section
-          className="listing-form-section"
-          aria-labelledby="form-title"
-        >
-          <h2 id="form-title">Give your item a new home</h2>
-
-          <p className="form-note">
-            Add your item below. Listings are submitted for admin review.
-          </p>
-
-          <form className="listing-form" onSubmit={handleListingSubmit}>
-            <label>
-              Item name
-              <input
-                required
-                name="title"
-                maxLength={100}
-                placeholder="e.g. Engineering textbook"
-              />
-            </label>
-
-            <label>
-              Category
-              <select name="category" defaultValue="Books">
-                {categories
-                  .filter((item) => item !== 'All Items')
-                  .map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-              </select>
-            </label>
-
-            <label>
-              Condition
-              <select name="condition" defaultValue="good">
-                <option value="new">New</option>
-                <option value="like-new">Like new</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
-              </select>
-            </label>
-
-            <label>
-              Price ({'\u20B9'})
-              <input
-                required
-                name="price"
-                type="number"
-                min="0"
-                max="1000000"
-                step="1"
-                placeholder="e.g. 250"
-              />
-            </label>
-
-            <label>
-              Pickup point
-              <input
-                required
-                name="pickupPoint"
-                maxLength={100}
-                placeholder="e.g. Library entrance"
-              />
-            </label>
-
-            <label className="form-wide">
-              Description
-              <textarea
-                required
-                name="description"
-                rows="3"
-                maxLength={1000}
-                placeholder="Describe the condition and details..."
-              />
-            </label>
-
-            <div className="form-wide image-upload-field">
-              <label htmlFor="item-image" className="upload-heading">
-                Product photos <span>(at least 2 required)</span>
-              </label>
-
-              <label htmlFor="item-image" className="image-upload-box">
-                <span className="upload-icon">{'\u{1F4F8}'}</span>
-                <strong>
-                  {selectedImages.length
-                    ? `${selectedImages.length} photos selected`
-                    : 'Click to upload photos'}
-                </strong>
-                <span>JPG, PNG, WEBP {'\u00B7'} Maximum 5 MB each</span>
-
-                <input
-                  ref={imageInputRef}
-                  id="item-image"
-                  name="images"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageChange}
-                  className="image-file-input"
-                />
-              </label>
-
-              {imageError && (
-                <p className="image-error" role="alert">
-                  {imageError}
-                </p>
-              )}
-
-              {imagePreviews.length > 0 && (
-                <div className="image-preview">
-                  {imagePreviews.map((preview, index) => (
-                    <img
-                      key={preview}
-                      src={preview}
-                      alt={`Selected product photo ${index + 1}`}
-                    />
-                  ))}
-
-                  <button
-                    type="button"
-                    className="remove-image-button"
-                    onClick={removeSelectedImage}
-                  >
-                    {'\u2715'} Remove photos
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              className="primary-button"
-              type="submit"
-              disabled={submitting}
-            >
-              {submitting ? 'Saving item...' : '\u002B Publish listing'}
-            </button>
-          </form>
-
-          {formMessage && (
-            <p className="form-message" role="status">
-              {formMessage}
-            </p>
-          )}
-        </section>
+        <ListingForm onSubmitted={clearFilters} />
       )}
 
       <section className="how-section" id="how-it-works">

@@ -1,318 +1,169 @@
-
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import api from '../api';
+import Navbar from '../components/Navbar';
 
-function readReservations() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem('saanjhaReservations') || '[]'
-    );
-
-    return Array.isArray(saved) ? saved : [];
-  } catch {
-    return [];
-  }
+function getStatusLabel(status) {
+  return {
+    active: 'Active',
+    expired: 'Expired',
+    cancelled: 'Cancelled',
+    completed: 'Completed',
+  }[status] || status;
 }
 
 export default function MyReservations() {
   const [reservations, setReservations] = useState([]);
-  const [codes, setCodes] = useState({});
-  const [messages, setMessages] = useState({});
+  const [notifications, setNotifications] = useState([]);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  async function loadReservations(showLoading = true) {
+    if (showLoading) setLoading(true);
+    try {
+      const [reservationResponse, notificationResponse] = await Promise.all([
+        api.get('/reservations/mine'),
+        api.get('/reservations/notifications'),
+      ]);
+      setReservations(reservationResponse.data.reservations || []);
+      setNotifications(notificationResponse.data.notifications || []);
+      setMessage('');
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || 'Could not load your reservations.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setReservations(readReservations());
+    loadReservations();
+    const refreshTimer = window.setInterval(() => {
+      loadReservations(false);
+    }, 60 * 1000);
+
+    return () => window.clearInterval(refreshTimer);
   }, []);
 
-  function saveReservations(updated) {
+  async function cancelReservation(reservationId) {
+    if (!window.confirm('Are you sure you want to cancel this reservation?')) {
+      return;
+    }
+
     try {
-      localStorage.setItem(
-        'saanjhaReservations',
-        JSON.stringify(updated)
+      await api.post(`/reservations/${reservationId}/cancel`);
+      setMessage('Reservation cancelled.');
+      await loadReservations();
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || 'Could not cancel this reservation.'
       );
-      setReservations(updated);
-      return true;
-    } catch {
-      window.alert(
-        'Could not save the update. Please try again.'
-      );
-      return false;
-    }
-  }
-
-  function verifyHandover(reservation) {
-    const enteredCode = (codes[reservation.reservationId] || '').trim();
-
-    if (!/^\d{4}$/.test(enteredCode)) {
-      setMessages((previous) => ({
-        ...previous,
-        [reservation.reservationId]:
-          'Please enter a valid 4-digit code.',
-      }));
-      return;
-    }
-
-    if (
-      reservation.status === 'Cancelled' ||
-      reservation.handoverStatus === 'Completed' ||
-      reservation.status === 'Completed'
-    ) {
-      setMessages((previous) => ({
-        ...previous,
-        [reservation.reservationId]:
-          'This reservation cannot be verified again.',
-      }));
-      return;
-    }
-
-    if (!reservation.handoverCode) {
-      setMessages((previous) => ({
-        ...previous,
-        [reservation.reservationId]:
-          'No handover code is saved for this reservation. Create a new reservation to test this feature.',
-      }));
-      return;
-    }
-
-    if (enteredCode !== String(reservation.handoverCode)) {
-      setMessages((previous) => ({
-        ...previous,
-        [reservation.reservationId]:
-          'Incorrect code. Please check and try again.',
-      }));
-      return;
-    }
-
-    const updated = readReservations().map((saved) =>
-      saved.reservationId === reservation.reservationId
-        ? {
-            ...saved,
-            status: 'Completed',
-            handoverStatus: 'Completed',
-            completedAt: new Date().toISOString(),
-          }
-        : saved
-    );
-
-    if (saveReservations(updated)) {
-      setCodes((previous) => ({
-        ...previous,
-        [reservation.reservationId]: '',
-      }));
-
-      setMessages((previous) => ({
-        ...previous,
-        [reservation.reservationId]:
-          'Handover verified successfully! Reservation completed.',
-      }));
-    }
-  }
-
-  function cancelReservation(reservationId) {
-    const target = reservations.find(
-      (reservation) => reservation.reservationId === reservationId
-    );
-
-    if (
-      !target ||
-      target.status === 'Completed' ||
-      target.handoverStatus === 'Completed' ||
-      target.status === 'Cancelled'
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Are you sure you want to cancel this reservation?'
-    );
-
-    if (!confirmed) return;
-
-    const updated = readReservations().map((reservation) =>
-      reservation.reservationId === reservationId
-        ? { ...reservation, status: 'Cancelled' }
-        : reservation
-    );
-
-    if (saveReservations(updated)) {
-      setMessages((previous) => ({
-        ...previous,
-        [reservationId]: 'Reservation cancelled.',
-      }));
     }
   }
 
   return (
-    <main className="my-reservations-page">
-      <Link to="/" className="details-back-link">
-        ← Back to listings
-      </Link>
+    <>
+      <Navbar showListItem={false} />
+      <main className="my-reservations-page">
+        <header className="my-reservations-header">
+          <h1>My Reservations</h1>
+          <p>Track reservations, expiry, notifications, and handovers.</p>
+        </header>
 
-      <header className="my-reservations-header">
-        <p className="reservation-eyebrow">
-          SAANJHA · CAMPUS REUSE
-        </p>
-        <h1>My Reservations</h1>
-        <p>Track reservations and verify item handovers.</p>
-      </header>
+        {message && (
+          <p role="alert" aria-live="polite">
+            {message}
+          </p>
+        )}
 
-      {reservations.length === 0 ? (
-        <section className="no-reservations">
-          <div className="reservation-success-icon">📦</div>
-          <h2>No reservations yet</h2>
-          <p>Your reserved items will appear here.</p>
-          <Link to="/" className="reservation-home-button">
-            Explore listings
-          </Link>
-        </section>
-      ) : (
-        <section className="my-reservations-list">
-          {reservations.map((reservation) => {
-            const completed =
-              reservation.status === 'Completed' ||
-              reservation.handoverStatus === 'Completed';
+        {notifications.length > 0 && (
+          <section aria-label="Reservation notifications">
+            <h2>Notifications</h2>
+            {notifications.slice(0, 5).map((notification) => (
+              <p key={notification._id} role="status">
+                {notification.message}
+              </p>
+            ))}
+          </section>
+        )}
 
-            const cancelled = reservation.status === 'Cancelled';
+        {loading ? (
+          <p role="status">Loading reservations...</p>
+        ) : reservations.length === 0 ? (
+          <section className="no-reservations">
+            <div className="reservation-success-icon">📦</div>
+            <h2>No reservations yet</h2>
+            <p>Your reserved items will appear here.</p>
+            <Link to="/" className="reservation-home-button">
+              Explore listings
+            </Link>
+          </section>
+        ) : (
+          <section className="my-reservations-list">
+            {reservations.map((reservation) => {
+              const listing = reservation.listing || {};
+              const active = reservation.status === 'active';
 
-            const codeUnavailable = !reservation.handoverCode;
-
-            return (
-              <article
-                className="my-reservation-card"
-                key={reservation.reservationId}
-              >
-                <div className="my-reservation-main">
-                  <div className="my-reservation-icon">📦</div>
-
-                  <div className="my-reservation-info">
-                    <h2>{reservation.itemTitle || 'Reserved item'}</h2>
-
-                    <p>
-                      {reservation.price != null
-                        ? `₹${reservation.price}`
-                        : 'Price on request'}
-                    </p>
-
-                    <span>
-                      Pickup: {reservation.pickupPoint || 'Campus pickup'}
-                    </span>
+              return (
+                <article className="my-reservation-card" key={reservation._id}>
+                  <div className="my-reservation-main">
+                    <div className="my-reservation-icon">📦</div>
+                    <div className="my-reservation-info">
+                      <h2>{listing.title || 'Reserved item'}</h2>
+                      <p>
+                        {listing.price != null
+                          ? `₹${listing.price}`
+                          : 'Price on request'}
+                      </p>
+                      <span>
+                        Pickup: {listing.pickupPoint || 'Campus pickup'}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="my-reservation-meta">
-                  <p>
-                    <strong>Reservation ID:</strong>{' '}
-                    {reservation.reservationId}
-                  </p>
-
-                  <p>
-                    <strong>Date:</strong>{' '}
-                    {reservation.createdAt
-                      ? new Date(reservation.createdAt).toLocaleString()
-                      : 'Not available'}
-                  </p>
-
-                  <p>
-                    <strong>Status:</strong>{' '}
-                    <span
-                      className={
-                        cancelled
-                          ? 'my-reservation-cancelled'
-                          : 'my-reservation-status'
-                      }
-                    >
-                      {completed
-                        ? 'Completed'
-                        : reservation.status || 'Reserved'}
-                    </span>
-                  </p>
-
-                  <p>
-                    <strong>Handover:</strong>{' '}
-                    {completed
-                      ? 'Completed ✓'
-                      : cancelled
-                        ? 'Cancelled'
-                        : reservation.handoverStatus || 'Pending'}
-                  </p>
-
-                  {!cancelled && !completed && (
-                    <div className="handover-verify-form">
-                      <label
-                        htmlFor={`handover-${reservation.reservationId}`}
+                  <div className="my-reservation-meta">
+                    <p>
+                      <strong>Reservation ID:</strong> {reservation._id}
+                    </p>
+                    <p>
+                      <strong>Date:</strong>{' '}
+                      {new Date(reservation.createdAt).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Status:</strong>{' '}
+                      <span
+                        className={
+                          reservation.status === 'cancelled'
+                            ? 'my-reservation-cancelled'
+                            : 'my-reservation-status'
+                        }
                       >
-                        Enter 4-digit handover code
-                      </label>
-
-                      <input
-                        id={`handover-${reservation.reservationId}`}
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={4}
-                        pattern="[0-9]{4}"
-                        placeholder="••••"
-                        value={codes[reservation.reservationId] || ''}
-                        disabled={codeUnavailable}
-                        onChange={(event) => {
-                          const value = event.target.value
-                            .replace(/\D/g, '')
-                            .slice(0, 4);
-
-                          setCodes((previous) => ({
-                            ...previous,
-                            [reservation.reservationId]: value,
-                          }));
-
-                          setMessages((previous) => ({
-                            ...previous,
-                            [reservation.reservationId]: '',
-                          }));
-                        }}
-                      />
-
+                        {getStatusLabel(reservation.status)}
+                      </span>
+                    </p>
+                    {active && (
+                      <p>
+                        <strong>Expires:</strong>{' '}
+                        {new Date(reservation.expiresAt).toLocaleString()}
+                      </p>
+                    )}
+                    {active && (
                       <button
                         type="button"
-                        className="primary-button"
-                        disabled={codeUnavailable}
-                        onClick={() => verifyHandover(reservation)}
+                        className="cancel-reservation-button"
+                        onClick={() => cancelReservation(reservation._id)}
                       >
-                        Verify Handover
+                        Cancel reservation
                       </button>
-
-                      {codeUnavailable && (
-                        <p role="status">
-                          This older reservation has no saved code.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {messages[reservation.reservationId] && (
-                    <p
-                      className="handover-feedback"
-                      role="status"
-                    >
-                      {messages[reservation.reservationId]}
-                    </p>
-                  )}
-
-                  {!cancelled && !completed && (
-                    <button
-                      type="button"
-                      className="cancel-reservation-button"
-                      onClick={() =>
-                        cancelReservation(reservation.reservationId)
-                      }
-                    >
-                      Cancel reservation
-                    </button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </section>
-      )}
-    </main>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        )}
+      </main>
+    </>
   );
 }

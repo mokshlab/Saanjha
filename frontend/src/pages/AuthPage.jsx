@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api, { saveSession } from '../api';
+import Brand from '../components/Brand';
 
 function AuthPage({ mode }) {
   const navigate = useNavigate();
@@ -19,10 +20,25 @@ function AuthPage({ mode }) {
   const isRegister = mode === 'register';
   const isOtp = mode === 'otp';
   const registeredEmail = location.state?.email || '';
+  const passwordChecks = {
+    length: password.length >= 8,
+    letter: /[A-Za-z]/.test(password),
+    number: /\d/.test(password),
+  };
+  const passwordIsValid = Object.values(passwordChecks).every(Boolean);
+  const passwordStrength = password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password)
+    ? 'Strong'
+    : passwordIsValid
+      ? 'Good'
+      : 'Weak';
 
   async function handleSubmit(event) {
     event.preventDefault();
     setOtpMessage('');
+    if (isRegister && !passwordIsValid) {
+      setOtpMessage('Password must be at least 8 characters and include a letter and a number.');
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -69,9 +85,7 @@ function AuthPage({ mode }) {
 
   return (
     <main className="auth-page">
-      <Link to="/" className="auth-brand">
-        saanjha<span>.</span>
-      </Link>
+      <Brand className="auth-brand" />
 
       <section className="auth-card">
         <div className="auth-illustration" aria-hidden="true">
@@ -164,30 +178,50 @@ function AuthPage({ mode }) {
               Password
               <input
                 type="password"
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters, with a letter and number"
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                minLength={6}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setOtpMessage('');
+                }}
+                minLength={isRegister ? 8 : 1}
+                aria-describedby={isRegister ? 'password-help' : undefined}
                 required
               />
+              {isRegister && (
+                <div id="password-help" className={`password-help password-${passwordStrength.toLowerCase()}`}>
+                  <p>Password security: <strong>{passwordStrength}</strong></p>
+                  <ul>
+                    <li className={passwordChecks.length ? 'password-met' : ''}>
+                      At least 8 characters
+                    </li>
+                    <li className={passwordChecks.letter ? 'password-met' : ''}>
+                      At least one letter
+                    </li>
+                    <li className={passwordChecks.number ? 'password-met' : ''}>
+                      At least one number
+                    </li>
+                  </ul>
+                </div>
+              )}
             </label>
           )}
 
           {isOtp && (
             <label className="auth-label">
-              Six-digit verification code
+              Four-digit verification code
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Enter 6-digit code"
+                placeholder="Enter 4-digit code"
                 value={otp}
                 onChange={(event) => {
-                  setOtp(event.target.value);
+                  setOtp(event.target.value.replace(/\D/g, '').slice(0, 4));
                   setOtpMessage('');
                 }}
-                pattern="[0-9]{6}"
-                maxLength={6}
+                pattern="[0-9]{4}"
+                maxLength={4}
                 required
               />
             </label>

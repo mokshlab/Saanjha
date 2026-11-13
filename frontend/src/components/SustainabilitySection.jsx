@@ -74,9 +74,6 @@ export default function SustainabilitySection() {
               </div>
             </div>
           </div>
-<a className="purpose-cta" href="/#browse">
-            Explore listings <span aria-hidden="true">↗</span>
-          </a>
         </div>
 
         <div className="purpose-visual">

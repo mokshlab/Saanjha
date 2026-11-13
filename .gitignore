@@ -17,8 +17,22 @@ coverage/
 
 # Runtime uploads and local database files
 backend/uploads/
+backend/data/
+backend/.data/
+mongodb-data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.pid
 *.log
 *.local
+
+# Test and tool caches
+.eslintcache
+*.tsbuildinfo
+playwright-report/
+test-results/
 
 # Package-manager and operating-system noise
 npm-debug.log*

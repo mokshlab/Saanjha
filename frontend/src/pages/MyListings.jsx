@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { isAuthenticated } from '../api';
+import Navbar from '../components/Navbar';
 
 const categories = [
   { label: 'Cycles', value: 'cycles' },
@@ -15,6 +16,7 @@ const categories = [
 
 function MyListings() {
   const [listings, setListings] = useState([]);
+  const [activeReservations, setActiveReservations] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     title: '',
@@ -24,6 +26,9 @@ function MyListings() {
     description: '',
   });
   const [message, setMessage] = useState('');
+  const [handoverCodes, setHandoverCodes] = useState({});
+  const [handoverMessages, setHandoverMessages] = useState({});
+  const [handoverSubmitting, setHandoverSubmitting] = useState({});
 
   async function refreshMyListings() {
     if (!isAuthenticated()) {
@@ -32,8 +37,12 @@ function MyListings() {
     }
 
     try {
-      const response = await api.get('/listings/me/listings');
-      setListings(response.data.listings || []);
+      const [listingResponse, reservationResponse] = await Promise.all([
+        api.get('/listings/me/listings'),
+        api.get('/reservations/seller/active'),
+      ]);
+      setListings(listingResponse.data.listings || []);
+      setActiveReservations(reservationResponse.data.reservations || []);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Could not load your listings.');
     }
@@ -142,26 +151,146 @@ function MyListings() {
       setMessage(error.response?.data?.message || 'Could not delete this listing.');
     }
   }
+
+  async function confirmHandover(reservation) {
+    const code = (handoverCodes[reservation._id] || '').trim();
+    if (!/^\d{4}$/.test(code)) {
+      setHandoverMessages((previous) => ({
+        ...previous,
+        [reservation._id]: 'Enter the buyer’s valid 4-digit code.',
+      }));
+      return;
+    }
+
+    setHandoverSubmitting((previous) => ({
+      ...previous,
+      [reservation._id]: true,
+    }));
+    setHandoverMessages((previous) => ({
+      ...previous,
+      [reservation._id]: '',
+    }));
+
+    try {
+      await api.post(`/reservations/${reservation._id}/handover`, { code });
+      setHandoverMessages((previous) => ({
+        ...previous,
+        [reservation._id]: 'Handover confirmed. Listing marked as sold.',
+      }));
+      setHandoverCodes((previous) => ({
+        ...previous,
+        [reservation._id]: '',
+      }));
+      await refreshMyListings();
+    } catch (error) {
+      setHandoverMessages((previous) => ({
+        ...previous,
+        [reservation._id]:
+          error.response?.data?.message || 'Could not confirm handover.',
+      }));
+    } finally {
+      setHandoverSubmitting((previous) => ({
+        ...previous,
+        [reservation._id]: false,
+      }));
+    }
+  }
+
   return (
-    <main
-      style={{
-        maxWidth: '1100px',
-        margin: '0 auto',
-        padding: '32px 20px 60px',
-        color: '#304c39',
-      }}
-    >
+    <>
+      <Navbar showListItem={false} />
+      <main
+        style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          padding: '32px 20px 60px',
+          color: '#304c39',
+        }}
+      >
       <h1>My Listings</h1>
       <p>Manage the items you have shared on Saanjha.</p>
-
       <p>
-        <Link to="/">← Back to Browse Listings</Link>
+        <Link
+          className="primary-button"
+          to="/"
+          state={{ openListingForm: true }}
+        >
+          + List an item
+        </Link>
       </p>
 
       {message && (
         <p role="status" aria-live="polite">
           {message}
         </p>
+      )}
+
+      {activeReservations.length > 0 && (
+        <section
+          aria-labelledby="pending-handovers-title"
+          style={{
+            margin: '28px 0',
+            padding: '22px',
+            border: '1px solid #d8e2d5',
+            borderRadius: '14px',
+            background: '#f3f7f0',
+          }}
+        >
+          <h2 id="pending-handovers-title">Pending handovers</h2>
+          <p>Enter the 4-digit code provided by the buyer after meeting them.</p>
+          {activeReservations.map((reservation) => (
+            <div
+              key={reservation._id}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'end',
+                gap: '12px',
+                padding: '14px 0',
+                borderTop: '1px solid #d8e2d5',
+              }}
+            >
+              <div style={{ flex: '1 1 220px' }}>
+                <strong>{reservation.listing?.title || 'Reserved item'}</strong>
+                <p style={{ margin: '6px 0 0' }}>
+                  Buyer: {reservation.buyer?.name || reservation.buyer?.email || 'Student'}
+                </p>
+              </div>
+              <label>
+                Handover code
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={handoverCodes[reservation._id] || ''}
+                  onChange={(event) => {
+                    const value = event.target.value.replace(/\D/g, '').slice(0, 4);
+                    setHandoverCodes((previous) => ({
+                      ...previous,
+                      [reservation._id]: value,
+                    }));
+                  }}
+                  style={{ ...inputStyle, width: '130px' }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => confirmHandover(reservation)}
+                disabled={handoverSubmitting[reservation._id]}
+                style={buttonStyle}
+              >
+                {handoverSubmitting[reservation._id]
+                  ? 'Confirming...'
+                  : 'Confirm handover'}
+              </button>
+              {handoverMessages[reservation._id] && (
+                <p role="status" style={{ flexBasis: '100%', margin: 0 }}>
+                  {handoverMessages[reservation._id]}
+                </p>
+              )}
+            </div>
+          ))}
+        </section>
       )}
 
       {editingId !== null && (
@@ -287,9 +416,8 @@ function MyListings() {
         <section style={{ padding: '32px 0' }}>
           <h2>No listings yet</h2>
           <p>
-            Items you publish from the home page will appear here.
+            Items you publish from the listing form will appear here.
           </p>
-          <Link to="/">List an item</Link>
         </section>
       ) : (
         <div
@@ -399,7 +527,8 @@ function MyListings() {
           })}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

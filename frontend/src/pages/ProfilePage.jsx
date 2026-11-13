@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clearSession } from '../api';
+import Navbar from '../components/Navbar';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -37,10 +38,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="profile-page">
-      <Link to="/" className="details-back-link">
-        ← Back to Saanjha
-      </Link>
+    <>
+      <Navbar showListItem={false} />
+      <main className="profile-page">
 
       <section className="profile-card">
         <div className="profile-avatar">
@@ -109,6 +109,7 @@ export default function ProfilePage() {
           Log Out
         </button>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

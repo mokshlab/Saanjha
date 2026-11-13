@@ -9,7 +9,7 @@ import MyListings from './pages/MyListings';
 import AdminModeration from './pages/AdminModeration';
 import ProfilePage from './pages/ProfilePage';
 import ContactPage from './pages/ContactPage';
-import { isAuthenticated } from './api';
+import { getStoredUser, isAuthenticated } from './api';
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -28,6 +28,20 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function AdminRoute({ children }) {
+  const location = useLocation();
+
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (getStoredUser()?.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <Routes>
@@ -36,7 +50,6 @@ function App() {
       <Route path="/register" element={<AuthPage mode="register" />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/verify-otp" element={<AuthPage mode="otp" />} />
-
       <Route path="/listing/:id" element={<ListingDetails />} />
 
       <Route
@@ -75,7 +88,14 @@ function App() {
         }
       />
 
-      <Route path="/admin-moderation" element={<AdminModeration />} />
+      <Route
+        path="/admin-moderation"
+        element={
+          <AdminRoute>
+            <AdminModeration />
+          </AdminRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
