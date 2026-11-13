@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 
 function generateOtp() {
-  const code = crypto.randomInt(100000, 1000000).toString();
+  const code = crypto.randomInt(1000, 10000).toString();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
   return { code, expiresAt };
 }
@@ -62,6 +62,10 @@ function buildTransport() {
 }
 
 async function sendOtpEmail(to, code) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Saanjha OTP] ${to}: ${code}`);
+  }
+
   const fromCandidate = process.env.OTP_FROM || process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@saanjha.local';
   const from = /</.test(fromCandidate) ? fromCandidate : `Saanjha <${fromCandidate}>`;
   const transport = buildTransport();
@@ -71,7 +75,6 @@ async function sendOtpEmail(to, code) {
   const html = `<p>Your verification code is <b>${code}</b>.</p><p>It expires in 10 minutes.</p>`;
 
   if (!transport) {
-    console.log(`OTP for ${to}: ${code} (SMTP not configured, logged for development)`);
     console.log('Configure SMTP to send real emails: set SMTP_SERVICE or SMTP_HOST/SMTP_PORT with SMTP_USER/SMTP_PASS');
     return { success: true, fallbackLogged: true };
   }
@@ -81,7 +84,6 @@ async function sendOtpEmail(to, code) {
     return { success: true };
   } catch (error) {
     console.warn(`OTP email delivery failed for ${to}: ${error.message}`);
-    console.log(`OTP for ${to}: ${code} (development fallback after delivery failure)`);
     return { success: true, fallbackLogged: true, deliveryError: error.message };
   }
 }

@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
+  password: { type: String, required: true, minlength: 8 },
   role: { type: String, enum: ['student', 'admin'], default: 'student' },
   phone: { type: String, trim: true },
   college: { type: String, required: true, trim: true },
@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   otpCodeHash: { type: String, default: null },
   otpExpiresAt: { type: Date, default: null },
-  otpLastSentAt: { type: Date, default: null }
+  otpLastSentAt: { type: Date, default: null },
+  otpAttempts: { type: Number, default: 0, min: 0 }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
