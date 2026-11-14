@@ -100,9 +100,9 @@ The mid-term phase is complete. M should now focus on feature completion for the
 |---|---|---|---|
 | P0 | Complete the real reservation evaluator workflow | DONE | Two student accounts and one admin completed registration, listing approval, reservation, cancellation, five-minute expiry, notification, handover, and sold-state checks |
 | P0 | Verify private pickup and contact visibility | DONE | Public, buyer, seller, cancelled, and expired account checks passed manually on 14 November 2026 |
-| P1 | Add user reports and admin review | BACKLOG | Students can report a listing/user and admins can review, resolve, reject, and audit reports |
+| P1 | Add user reports and admin review | REVIEW | M backend report model/API is implemented and tested; N report screens and H integration evidence remain |
 | P1 | Complete reservation activity and notification visibility | DONE | Buyer and seller can see relevant reservation, cancellation, expiry, and handover history; expiry notification visibility passed manual verification |
-| P1 | Verify and harden Cloudinary media flow | REVIEW | Real Cloudinary upload, local fallback, failure cleanup, and accepted image limits are manually verified |
+| P1 | Verify and harden Cloudinary media flow | REVIEW | M video schema/upload endpoint and 80MB/90-second limits are implemented; real Cloudinary upload, cleanup, and N/H workflow verification remain |
 | P1 | Run reservation concurrency evidence | REVIEW | Concurrent attempts produce one winner and a consistent final listing state, with raw results recorded |
 | P2 | Final deployment and demo readiness | BACKLOG | Environment, Atlas persistence, admin access, media storage, clean demo data, and final evidence are ready |
 
@@ -114,7 +114,7 @@ Video upload is deliberately deferred. Implement it only if the final evaluation
 2. Run the reservation concurrency experiment and save truthful raw results.
 3. Prepare deployment readiness: Atlas persistence, production environment, admin setup, media, and clean demo data.
 
-Reports and admin review are intentionally deferred.
+Reports/admin review is in progress: M's protected backend API is implemented; the student report form, admin review UI, and end-to-end evidence remain.
 
 Video upload, Wanted Board, search experiments, bundle optimization, and broad refactoring remain deferred.
 
