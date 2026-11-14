@@ -35,6 +35,18 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only image files (JPEG, JPG, PNG, GIF, WebP) are allowed!'));
 };
 
+const videoFileFilter = (req, file, cb) => {
+  const allowedExtensions = ['.mp4', '.webm', '.mov', '.m4v'];
+  const allowedMimeTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
+  const extension = path.extname(file.originalname).toLowerCase();
+
+  if (allowedExtensions.includes(extension) && allowedMimeTypes.includes(file.mimetype)) {
+    return cb(null, true);
+  }
+
+  cb(new Error('Only MP4, WebM, MOV, and M4V video files are allowed!'));
+};
+
 const upload = multer({
   storage,
   limits: {
@@ -44,10 +56,19 @@ const upload = multer({
   fileFilter
 });
 
-const handleUploadError = (error, req, res, next) => {
+const videoUpload = multer({
+  storage,
+  limits: {
+    fileSize: 80 * 1024 * 1024,
+    files: 1
+  },
+  fileFilter: videoFileFilter
+});
+
+const handleUploadError = (error, req, res, next, maxFileSize = '5MB') => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File too large. Maximum size allowed is 5MB.' });
+      return res.status(400).json({ message: `File too large. Maximum size allowed is ${maxFileSize}.` });
     }
     if (error.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({ message: 'Too many files. Maximum 10 files allowed.' });
@@ -57,7 +78,8 @@ const handleUploadError = (error, req, res, next) => {
     }
   }
 
-  if (error.message?.includes('Only image files')) {
+  if (error.message?.includes('Only image files') ||
+    error.message?.includes('Only MP4')) {
     return res.status(400).json({ message: error.message });
   }
 
@@ -79,10 +101,16 @@ const uploadFields = (fields) => [
   handleUploadError
 ];
 
+const uploadVideo = (fieldName = 'video') => [
+  videoUpload.single(fieldName),
+  (error, req, res, next) => handleUploadError(error, req, res, next, '80MB')
+];
+
 module.exports = {
   upload,
   uploadSingle,
   uploadMultiple,
   uploadFields,
+  uploadVideo,
   handleUploadError
 };

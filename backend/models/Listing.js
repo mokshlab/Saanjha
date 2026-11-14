@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const videoSchema = new mongoose.Schema({
+  url: { type: String, required: true, trim: true },
+  publicId: { type: String, required: true, trim: true },
+  durationSeconds: { type: Number, required: true, min: 0, max: 90 },
+  bytes: { type: Number, required: true, min: 1, max: 80 * 1024 * 1024 },
+  format: { type: String, required: true, trim: true }
+}, { _id: false });
+
 const listingSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true, maxlength: 120 },
   description: { type: String, required: true, trim: true, maxlength: 2000 },
@@ -18,6 +26,7 @@ const listingSchema = new mongoose.Schema({
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   approvedAt: Date,
   tags: [{ type: String, trim: true }],
+  video: videoSchema,
   reservedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   reservedUntil: Date,
   soldAt: Date
