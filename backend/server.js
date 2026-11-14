@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const User = require('./models/User');
 const reservationRoutes = require('./routes/reservations');
+const { validateProductionOtpConfig } = require('./services/otp');
 
 dotenv.config({ path: path.join(__dirname, '..', '.local', '.env') });
 
@@ -14,17 +15,24 @@ const PORT = process.env.PORT || 3101;
 let memoryServer = null;
 let reservationExpiryTimer = null;
 
-function validateProductionConfig() {
-  if (process.env.NODE_ENV !== 'production') return;
+function validateProductionConfig(environment = process.env) {
+  if (environment.NODE_ENV !== 'production') return;
 
-  const required = ['JWT_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'CAMPUS_EMAIL_DOMAIN'];
-  const missing = required.filter((name) => !process.env[name]);
+  const required = [
+    'JWT_SECRET',
+    'ADMIN_EMAIL',
+    'ADMIN_PASSWORD',
+    'CAMPUS_EMAIL_DOMAIN',
+    'MONGODB_URI'
+  ];
+  const missing = required.filter((name) => !environment[name]);
   if (missing.length) {
     throw new Error(`Missing required production configuration: ${missing.join(', ')}`);
   }
-  if (process.env.JWT_SECRET.length < 32) {
+  if (environment.JWT_SECRET.length < 32) {
     throw new Error('JWT_SECRET must be at least 32 characters in production');
   }
+  validateProductionOtpConfig(environment);
 }
 
 app.use(cors({ origin: true, credentials: true }));
@@ -46,6 +54,9 @@ async function connectDatabase() {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/saanjha');
     console.log('MongoDB connected');
   } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Production MongoDB connection failed: ${error.message}`);
+    }
     console.warn('MongoDB unavailable; starting development in-memory database:', error.message);
     memoryServer = await MongoMemoryReplSet.create({
       replSet: { count: 1 }
@@ -99,3 +110,4 @@ process.on('SIGINT', async () => {
 });
 
 module.exports = app;
+module.exports.validateProductionConfig = validateProductionConfig;

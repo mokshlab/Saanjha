@@ -22,7 +22,27 @@ function canSendAgain(lastSentAt, minIntervalMs = 60 * 1000) {
   return Date.now() - new Date(lastSentAt).getTime() >= minIntervalMs;
 }
 
-function buildTransport() {
+function validateProductionOtpConfig(environment = process.env) {
+  if (environment.NODE_ENV !== 'production') return;
+
+  const hasCredentials = Boolean(environment.SMTP_USER && environment.SMTP_PASS);
+  const hasService = Boolean(environment.SMTP_SERVICE);
+  const smtpPort = Number(environment.SMTP_PORT);
+  const hasHost = Boolean(
+    environment.SMTP_HOST &&
+    Number.isInteger(smtpPort) &&
+    smtpPort > 0 &&
+    smtpPort <= 65535
+  );
+
+  if (!hasCredentials || (!hasService && !hasHost)) {
+    throw new Error(
+      'Production OTP delivery requires SMTP_USER, SMTP_PASS, and either SMTP_SERVICE or SMTP_HOST with SMTP_PORT'
+    );
+  }
+}
+
+function buildTransport(environment = process.env) {
   const {
     SMTP_HOST,
     SMTP_PORT,
@@ -31,7 +51,7 @@ function buildTransport() {
     SMTP_SERVICE,
     SMTP_SECURE,
     SMTP_ALLOW_INSECURE
-  } = process.env;
+  } = environment;
 
   if (!SMTP_USER || !SMTP_PASS) {
     return null; // Use console fallback
@@ -62,6 +82,8 @@ function buildTransport() {
 }
 
 async function sendOtpEmail(to, code) {
+  validateProductionOtpConfig();
+
   if (process.env.NODE_ENV !== 'production') {
     console.log(`[Saanjha OTP] ${to}: ${code}`);
   }
@@ -75,6 +97,9 @@ async function sendOtpEmail(to, code) {
   const html = `<p>Your verification code is <b>${code}</b>.</p><p>It expires in 10 minutes.</p>`;
 
   if (!transport) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Production OTP delivery is unavailable because SMTP is not configured');
+    }
     console.log('Configure SMTP to send real emails: set SMTP_SERVICE or SMTP_HOST/SMTP_PORT with SMTP_USER/SMTP_PASS');
     return { success: true, fallbackLogged: true };
   }
@@ -83,6 +108,9 @@ async function sendOtpEmail(to, code) {
     await transport.sendMail({ from, to, subject, text, html });
     return { success: true };
   } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`OTP email delivery failed: ${error.message}`);
+    }
     console.warn(`OTP email delivery failed for ${to}: ${error.message}`);
     return { success: true, fallbackLogged: true, deliveryError: error.message };
   }
@@ -93,5 +121,6 @@ module.exports = {
   hashOtp,
   verifyOtpHash,
   canSendAgain,
+  validateProductionOtpConfig,
   sendOtpEmail
 };
