@@ -31,12 +31,13 @@ The frontend provides the user interface for browsing listings, managing items, 
 - Contact page connected to the backend contact-message route.
 - Listing detail, reservation, confirmation, My Reservations, and My Listings handover views are connected to the reservation APIs.
 - Reservation cancellation, expiry refresh, notifications, seller handover controls, seller-side buyer contact display, and structured buyer meet-up details are implemented and manually verified.
+- Report and video-upload backend endpoints exist; the connected report screens and video controls are still pending.
 
 ### Admin Moderation
 - Admin moderation UI loads pending listings from the backend.
 - Admin approve/reject actions use the moderation API.
 - Admin listing management and user-status controls are available through the protected admin routes.
-- The connected workflow remains pending owner verification.
+- Approval and rejection behavior has been manually verified.
 
 ### Route Protection
 - Frontend route checks for selected pages, including profile, listings, reservations, and reservation confirmation.
@@ -108,6 +109,7 @@ Use the values supplied by the project team. Do not commit secrets or private cr
 - OTP delivery uses SMTP when configured and prints a four-digit development fallback when delivery is unavailable.
 - Reservation, expiry, notification, privacy, and handover screens use the backend APIs and have passed the connected evaluator workflow.
 - Admin moderation is API-connected and the owner has verified approval and rejection behavior.
+- Reports and video upload currently have backend support only; their frontend workflows are not complete.
 - Frontend route checks do not replace backend authorization.
 - API connectivity and persistent database behavior require owner verification before deployment.
 
@@ -125,6 +127,7 @@ M's final integration work connected the frontend to the backend for:
 - The complete reservation, cancellation, expiry, notification, and handover journey passed manual verification.
 - Participant-only pickup/contact visibility passed manual verification on 14 November 2026.
 - The temporary five-minute reservation option passed expiry and notification verification.
+- Build and verify report submission/review screens and video upload/playback controls.
 - Verify real Cloudinary uploads and fallback behavior.
 - Run and record the reservation concurrency experiment with live test credentials.
 - Add robust loading, empty, and error states.

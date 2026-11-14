@@ -21,7 +21,7 @@ Public-safe project tracking for the evaluator demo. Do not add credentials, pri
 
 ## M Contribution Record
 
-This record describes the work merged from **M** and the latest local implementation staged for the next push. User-facing features remain subject to human verification.
+This record describes the work merged from **M**. Backend features remain subject to connected workflow verification where noted.
 
 ### Authentication and account safety
 
@@ -68,7 +68,7 @@ This record describes the work merged from **M** and the latest local implementa
 
 ### Current contribution evidence
 
-- Backend automated suite currently passes **17/17 tests**.
+- Backend automated suite currently passes **27/27 tests**.
 - Frontend lint and production build currently pass.
 - Manual verification on 14 November 2026 passed public privacy, reservation creation, buyer access, seller access, seller activity, cancellation privacy, five-minute expiry, expiry notification visibility, handover, unauthorized access, admin approval, admin rejection, the complete evaluator workflow, and the final backend security review.
 - Cloudinary code is integrated, but a real credential-backed upload remains to be verified.
@@ -77,20 +77,20 @@ This record describes the work merged from **M** and the latest local implementa
 
 | ID | Task | Area | Status | Acceptance check |
 |---|---|---|---|---|
-| AUTH-01 | Build student registration/login/OTP screens | UI/API | HUMAN VERIFICATION PENDING | Backend registration, campus email validation, 8-character password policy, four-digit OTP, JWT session, and logout are connected |
-| LIST-01 | Build listing creation and edit form | UI | HUMAN VERIFICATION PENDING | Authenticated submission accepts at least two images, categories, condition, and zero price |
-| LIST-03 | Add listing edit approval rules | API | REVIEW | Sensitive edits leave discovery until admin approval |
+| AUTH-01 | Build student registration/login/OTP screens | UI/API | DONE | Registration, campus email validation, password policy, four-digit OTP, JWT session, and logout passed manual verification |
+| LIST-01 | Build listing creation and edit form | UI | DONE | Authenticated submission accepts at least two images, categories, condition, and zero price; manual verification passed |
+| LIST-03 | Add listing edit approval rules | API | DONE | Sensitive edits leave discovery until admin approval; manual verification passed |
 | LIST-02 | Add Cloudinary backend media upload | API | REVIEW | Configured Cloudinary stores accepted media; blank credentials use the local fallback |
-| MOD-01 | Build admin moderation screen | UI/API | HUMAN VERIFICATION PENDING | Admin can load pending listings and approve/reject them through the API |
+| MOD-01 | Build admin moderation screen | UI/API | DONE | Admin approval and rejection behavior passed manual verification |
 | RES-01 | Design Reservation and ItemJourney models | API | REVIEW | Schema supports one active reservation, expiry, and history |
 | RES-02 | Implement atomic first-come-first-served reservation | API | REVIEW | Concurrent attempts produce at most one winner |
-| RES-03 | Add expiry and cancellation notifications | API/UI | HUMAN VERIFICATION PENDING | Backend expiry/cancellation notifications are surfaced in My Reservations and refreshed automatically |
-| HAND-01 | Add buyer code and seller confirmation | API/UI | HUMAN VERIFICATION PENDING | Seller enters the buyer's code through My Listings; successful entry marks listing sold and records handover |
+| RES-03 | Add expiry and cancellation notifications | API/UI | DONE | Expiry/cancellation notifications are surfaced in My Reservations and refreshed automatically; manual verification passed |
+| HAND-01 | Add buyer code and seller confirmation | API/UI | DONE | Seller enters the buyer's code through My Listings; successful entry marks listing sold and records handover |
 | TEST-01 | Add core reservation tests | EXP | REVIEW | Core listing, reservation, handover, expiry, and transaction rollback invariants are tested |
 | EXP-01 | Run reservation concurrency experiment | EXP | REVIEW | Runner reports raw status counts and winner count for supplied tokens |
 | EXP-02 | Add campus-word search comparison | EXP | BACKLOG | Held-out queries produce transparent metrics |
 | WANT-01 | Build Wanted Board | UI/API | BACKLOG | Only start after reservation flow is reliable |
-| DEMO-01 | Prepare five-day evaluator demo script | EXP | HUMAN VERIFICATION PENDING | Register/list/approve/search/reserve/handover path is rehearsed |
+| DEMO-01 | Prepare evaluator demo evidence | EXP | HUMAN VERIFICATION PENDING | Register/list/approve/search/reserve/handover path is rehearsed |
 
 ## Final-Phase M Priority
 
@@ -102,21 +102,20 @@ The mid-term phase is complete. M should now focus on feature completion for the
 | P0 | Verify private pickup and contact visibility | DONE | Public, buyer, seller, cancelled, and expired account checks passed manually on 14 November 2026 |
 | P1 | Add user reports and admin review | REVIEW | M backend report model/API is implemented and tested; N report screens and H integration evidence remain |
 | P1 | Complete reservation activity and notification visibility | DONE | Buyer and seller can see relevant reservation, cancellation, expiry, and handover history; expiry notification visibility passed manual verification |
-| P1 | Verify and harden Cloudinary media flow | REVIEW | M video schema/upload endpoint and 80MB/90-second limits are implemented; real Cloudinary upload, cleanup, and N/H workflow verification remain |
+| P1 | Verify and harden Cloudinary media flow | REVIEW | M video schema/upload endpoint and 80MB/90-second limits are implemented; N video UI, real Cloudinary upload, cleanup, and workflow verification remain |
 | P1 | Run reservation concurrency evidence | REVIEW | Concurrent attempts produce one winner and a consistent final listing state, with raw results recorded |
 | P2 | Final deployment and demo readiness | BACKLOG | Environment, Atlas persistence, admin access, media storage, clean demo data, and final evidence are ready |
 
-Video upload is deliberately deferred. Implement it only if the final evaluation rubric explicitly requires it.
-
 ## Remaining Important M Tasks
 
-1. Verify real Cloudinary upload, local fallback, file limits, and failed-upload cleanup.
-2. Run the reservation concurrency experiment and save truthful raw results.
-3. Prepare deployment readiness: Atlas persistence, production environment, admin setup, media, and clean demo data.
+1. Support N/H while they connect and verify report and video workflows.
+2. Verify real Cloudinary upload, local fallback, file limits, and failed-upload cleanup.
+3. Run the reservation concurrency experiment and save truthful raw results.
+4. Prepare deployment readiness: Atlas persistence, production environment, admin setup, media, and clean demo data.
 
 Reports/admin review is in progress: M's protected backend API is implemented; the student report form, admin review UI, and end-to-end evidence remain.
 
-Video upload, Wanted Board, search experiments, bundle optimization, and broad refactoring remain deferred.
+Wanted Board, search experiments, bundle optimization, and broad refactoring remain deferred.
 
 ## Team Rules
 
@@ -138,25 +137,12 @@ Video upload, Wanted Board, search experiments, bundle optimization, and broad r
 - Every feature demo must state the expected user result, run its narrowest automated check, run the real workflow where possible, and record pass/fail/blocker evidence.
 - When a dated push is requested, ask for the exact date, time, timezone, branch, files, and short commit message. Never infer or fabricate a timeline.
 
-## Four-day Mid-term Plan
-
-| Date | M - Backend/Data | N - Frontend/UX | H - Tests/Integration |
-|---|---|---|---|
-| 22 Oct | Stabilize auth, listing, reservation, expiry, and handover contracts. | Start auth and listing screens around the current browse shell. | Prepare clean demo data, API smoke checks, and a blocker list. |
-| 23 Oct | Finish data consistency, edit approval, notifications, and privacy rules. | Complete the smallest login, listing, reservation, and handover states. | Run register/list/approve/search/reserve checks and record failures. |
-| 24 Oct | Fix connected-workflow defects only and avoid optional architecture. | Add admin moderation and the minimum activity view. | Run the full evaluator path and verify mobile/desktop basics. |
-| 25 Oct | Freeze backend behavior and review demo configuration. | Polish the evaluator path and remove misleading placeholders. | Rehearse the five-minute demo and prepare evidence for the report. |
-
-Defer Cloudinary, Wanted Board, and search experiments if the core evaluator path is unstable.
-
-For the final phase, Cloudinary verification remains useful after the P0 workflow is stable. Wanted Board and search experiments remain deferred.
-
 ## Pushed Scope Check
 
-The current merged scope contains the reservation models, atomic reservation endpoint, expiry/cancellation/handover implementation, notifications, database-readiness fix, listing-edit rules, focused tests, optional Cloudinary storage, the concurrency runner, admin listing management, seller deletion protection, contact messaging, password policy, four-digit OTP handling, and frontend reservation/handover API integration. These remain `REVIEW` or `HUMAN VERIFICATION PENDING` until owner verification.
+The current merged scope contains the reservation models, atomic reservation endpoint, expiry/cancellation/handover implementation, notifications, database-readiness fix, listing-edit rules, reports API, video-upload backend, focused tests, optional Cloudinary storage, the concurrency runner, admin listing management, seller deletion protection, contact messaging, password policy, four-digit OTP handling, and frontend reservation/handover API integration. Reports and video still require connected frontend work and workflow verification.
 
 No task in this scope is marked `DONE` without owner verification.
 
 ## Current Evaluator Boundary
 
-The merged project contains the backend reservation and handover APIs, backend tests, the concurrency runner, frontend-connected authentication, listing, reservation, and handover flows, password guidance, four-digit OTP handling, contact messaging, admin listing management, and API-connected admin moderation. The frontend reservation and handover screens are connected but remain outside the verified evaluator path until the owning teammate checks them.
+The merged project contains the backend reservation and handover APIs, reports API, video-upload backend, backend tests, the concurrency runner, frontend-connected authentication, listing, reservation, and handover flows, password guidance, four-digit OTP handling, contact messaging, admin listing management, and API-connected admin moderation. Reports and video still require connected frontend work and workflow verification.

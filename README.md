@@ -57,9 +57,7 @@ The merged implementation includes substantial work completed by **M** across th
 - Frontend-connected reservation creation, cancellation, reservation history, lifecycle activity, expiry notifications, seller handover controls, and participant-only pickup/contact visibility.
 - HTTP integration tests, rollback tests, privacy/activity tests, backend validation, frontend lint/build validation, and final-phase project documentation.
 
-The merged branch contains the authentication, listing, reservation, transaction, notification, and handover work. The latest privacy, activity, and presentation improvements are complete locally and staged for the next push. The remaining browser gap is expiry-notification visibility.
-
-The frontend reservation and handover views are now connected to the backend APIs. Do not describe the full evaluator journey as complete until expiry, notification, and handover are tested through the real application.
+The current branch contains the authentication, listing, reservation, transaction, notification, handover, reports, and video-upload backend work. The connected reservation and handover workflow has been manually verified, including expiry notification visibility.
 
 ## Final Evaluation Guide
 
@@ -84,6 +82,7 @@ Earlier manual checks also passed for registration, terminal OTP fallback, OTP l
 
 ### Remaining before final delivery
 
+- Connect and verify the student report UI, admin report review UI, and video upload/playback UI.
 - Real Cloudinary upload and local fallback verification.
 - Reservation concurrency evidence.
 - Deployment, environment, database, media, and demo evidence.
@@ -92,11 +91,12 @@ Earlier manual checks also passed for registration, terminal OTP fallback, OTP l
 
 The mid-term phase is complete. The remaining work is focused on final evaluator features, in this order:
 
-1. Verify the real Cloudinary upload and local fallback behavior.
-2. Run and record the reservation concurrency experiment.
-3. Prepare deployment, environment, database, media, and demo evidence.
+1. Connect and verify the reports and video user interfaces.
+2. Verify the real Cloudinary upload and local fallback behavior.
+3. Run and record the reservation concurrency experiment.
+4. Prepare deployment, environment, database, media, and demo evidence.
 
-Video upload is deferred and should be added only if the final evaluation rubric requires it. Wanted Board, search experiments, visual redesign, and bundle optimization are not current final-phase priorities.
+Wanted Board, advanced search experiments, visual redesign, and bundle optimization are not current final-phase priorities.
 
 ### Simple final test workflow
 
@@ -157,4 +157,4 @@ When SMTP is unavailable in development, the backend prints the four-digit OTP i
 - [PROJECT_MASTER_CONTEXT_v2.txt](PROJECT_MASTER_CONTEXT_v2.txt) - complete product, academic, architecture, and risk context.
 - [frontend/README.md](frontend/README.md) - frontend implementation notes.
 
-The project is being developed in small, verifiable phases. The evaluator path currently demonstrates the backend foundation, authentication, seller listing flow, and reservation lifecycle APIs.
+The project is being developed in small, verifiable phases. The verified evaluator path currently covers authentication, listing approval, reservation lifecycle, privacy, expiry notifications, handover, and moderation. Reports and video upload have backend support; their connected frontend workflows remain pending.

@@ -96,7 +96,7 @@ A listing can contain:
 - Category
 - Condition
 - At least two images
-- Optional video stored through Cloudinary in a later media phase
+- Optional video stored through Cloudinary through the backend media boundary
 - Campus pickup point
 - Book branch and semester when the category is Books
 - Seller identity shown at the appropriate privacy level
@@ -184,7 +184,7 @@ Price, pickup-point, and book-detail edit behavior is currently flexible and sho
 5. CURRENT IMPLEMENTED STATUS [CURRENT]
 ----------------------------------------------------------------
 
-The current code is a merged evaluator build. It implements authentication, listing, moderation, reservation, notification, and handover flows, but it is not yet the complete product described above.
+The current code is a merged evaluator build. It implements authentication, listing, moderation, reservation, notification, handover, reports, and video-upload backend flows. The connected reports and video frontend workflows are still incomplete.
 
 ### Backend currently implemented
 
@@ -218,6 +218,8 @@ The current code is a merged evaluator build. It implements authentication, list
 - Optional Cloudinary image storage with a local fallback.
 - Seller deletion protection for reserved or sold listings.
 - Contact message model, route, and frontend page.
+- Report model, student reporting routes, and admin report review routes.
+- Listing video metadata, validated upload middleware, and Cloudinary video upload route.
 - Reservation and ItemJourney models.
 - Atomic first-come-first-served reservation with one active reservation per buyer.
 - Preset duration validation with a 54-hour default.
@@ -240,7 +242,7 @@ The current code is a merged evaluator build. It implements authentication, list
 - Frontend development port 5174.
 - Clear placeholder messaging when the backend is unavailable.
 
-The frontend reservation, activity, and handover screens are connected to the backend APIs but require owner workflow verification. Admin moderation is API-connected but requires owner workflow verification. Password policy and four-digit OTP changes are implemented and covered by focused backend tests.
+The frontend reservation, activity, and handover screens are connected to the backend APIs and the complete evaluator workflow has been manually verified. Admin moderation approval and rejection are also verified. Reports and video upload currently have backend support only; their connected frontend workflows remain incomplete.
 
 ### Working page plan [PLANNED]
 
@@ -276,11 +278,12 @@ The real development value belongs only in the ignored local team context and `.
 
 The mid-term phase is complete. These are the remaining final-phase product tasks, ordered by evaluation and project necessity:
 
-1. Verify real Cloudinary upload, local fallback, accepted limits, and failure cleanup.
-2. Run and record reservation concurrency evidence.
-3. Prepare final deployment configuration, persistent database verification, clean demo data, and evaluation evidence.
+1. Connect and verify the student report UI, admin report review UI, and video upload/playback UI.
+2. Verify real Cloudinary upload, local fallback, accepted limits, and failure cleanup.
+3. Run and record reservation concurrency evidence.
+4. Prepare final deployment configuration, persistent database verification, clean demo data, and evaluation evidence.
 
-Video upload is deliberately deferred and should be implemented only if the final evaluation rubric requires it. Wanted Board, search experiments, visual redesign, and bundle optimization remain deferred.
+Wanted Board, search experiments, visual redesign, and bundle optimization remain deferred.
 
 Do not describe these features as working in a synopsis or presentation until they are implemented and tested.
 
@@ -290,13 +293,12 @@ Do not describe these features as working in a synopsis or presentation until th
 
 M owns the backend contracts and data behavior. N or H may be needed for connected interface work and real workflow evidence.
 
-1. Verify Cloudinary with real non-committed credentials and preserve the local development fallback.
-2. Run the concurrency experiment and record truthful raw results.
-3. Freeze the feature scope and prepare the final environment and demo evidence.
+1. Support N/H while they connect and verify the report and video interfaces.
+2. Verify Cloudinary with real non-committed credentials and preserve the local development fallback.
+3. Run the concurrency experiment and record truthful raw results.
+4. Freeze the feature scope and prepare the final environment and demo evidence.
 
-Reports and admin review are intentionally deferred for the current final phase.
-
-Do not begin video upload, Wanted Board, search experiments, broad refactoring, accessibility polish, or bundle optimization until the P0 and P1 items above are complete or explicitly removed from the final rubric.
+Do not begin Wanted Board, search experiments, broad refactoring, accessibility polish, or bundle optimization until the current final-phase tasks are complete or explicitly removed from the final rubric.
 
 ----------------------------------------------------------------
 7. TARGET ARCHITECTURE
@@ -320,10 +322,10 @@ Saanjha/
 ├── PROJECT_MASTER_CONTEXT_v2.txt  # this file
 ├── README.md                      # setup and current status
 ├── backend/
-│   ├── models/                    # User, Listing
-│   ├── routes/                    # auth, listings, admin
+│   ├── models/                    # User, Listing, Reservation, Report, etc.
+│   ├── routes/                    # auth, listings, reservations, reports, admin
 │   ├── middleware/                # auth, upload
-│   ├── services/                  # OTP
+│   ├── services/                  # OTP and media
 │   └── server.js
 └── frontend/
     ├── src/App.jsx               # current listing shell
@@ -457,26 +459,18 @@ The Wanted Board is the first feature to reduce if the reservation journey or ex
 - Atlas free tier performance is constrained; timing results should not be generalized.
 - Synthetic experiment data cannot prove actual student behavior.
 - Cloudinary limits, file validation, and backend upload security must be tested before media is called production-ready.
-- The current frontend is a shell. Backend routes should not be presented as complete user-facing workflows.
+- Reports and video routes are backend foundations only; do not present them as complete user-facing workflows until their frontend paths are connected and verified.
 - Automated tests should be added before the reservation experiment, not after the final presentation.
 
 ----------------------------------------------------------------
 12. NEXT WORK ORDER
 ----------------------------------------------------------------
 
-1. Add campus configuration and complete student/admin auth screens.
-2. Add listing creation/editing UI and backend media validation.
-3. Add Cloudinary backend upload integration.
-4. Add admin moderation UI.
-5. Design Reservation and ItemJourney schemas.
-6. Implement atomic reservation and one-active-reservation rule.
-7. Implement expiry, notification, cancellation, and handover code.
-8. Add item history and privacy-controlled contact/pickup visibility.
-9. Add focused tests for reservation correctness.
-10. Build E1 concurrency measurement.
-11. Improve visual polish and accessibility.
-12. Add campus-word search and E2 evaluation.
-13. Add Wanted Board only after the core flow is reliable.
+1. Connect and verify report submission and admin report review UI.
+2. Connect and verify video upload, preview, and playback UI.
+3. Verify real Cloudinary upload, local fallback, limits, and cleanup.
+4. Build E1 concurrency measurement evidence.
+5. Prepare deployment, demo data, and final evaluation evidence.
 
 ----------------------------------------------------------------
 13. RULES FOR FUTURE AI SESSIONS
@@ -509,5 +503,5 @@ The current local implementation contains the following implementation work comp
 - Manual verification: public pickup privacy, reservation creation, buyer access, seller access, seller activity history, cancellation privacy, five-minute expiry, handover, unauthorized access, admin approval, and admin rejection passed on 14 November 2026. Seller activity now displays the selected duration and reserved-until time.
 - Verification: HTTP route integration tests, transaction rollback tests, privacy/activity tests, backend syntax checks, frontend lint/build checks, and project status/documentation updates.
 
-The earlier M contribution is merged in `origin/main` and `origin/moksh`; the latest privacy/activity implementation is local and staged for the next push. Automated checks currently pass, but the complete evaluator journey, privacy/activity screens, and real Cloudinary upload still require human verification.
+M's reports and video backend work is pushed to `origin/moksh`. The reservation evaluator journey and privacy/activity screens are manually verified. Real Cloudinary upload and the connected reports/video frontend workflows still require verification.
 ================================================================
