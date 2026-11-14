@@ -17,6 +17,8 @@ The frontend provides the user interface for browsing listings, managing items, 
 ### Authentication UI
 - Registration and login pages connected to `/api/auth`.
 - Campus email validation and backend OTP verification.
+- Registration password guidance with an 8-character minimum, a letter, and a number.
+- Four-digit OTP input with numeric-only validation and development terminal fallback.
 - JWT session storage and protected route checks.
 - Logged-in user name in the navigation bar.
 - Logout functionality.
@@ -25,12 +27,15 @@ The frontend provides the user interface for browsing listings, managing items, 
 - Browse approved listings from the backend with search, filtering, and sorting.
 - Authenticated listing submission with at least two images, condition, categories, and zero price support.
 - Backend-backed My Listings retrieval and seller edits.
-- Listing detail, reservation, and confirmation views remain available, but reservation screens are not yet fully connected to the reservation API.
-- My Profile and My Reservations pages remain evaluator UI work in progress.
+- Seller listing deletion with protection for reserved and sold items.
+- Contact page connected to the backend contact-message route.
+- Listing detail, reservation, confirmation, My Reservations, and My Listings handover views are connected to the reservation APIs.
+- Reservation cancellation, expiry refresh, notifications, seller handover controls, seller-side buyer contact display, and structured buyer meet-up details are implemented and manually verified.
 
 ### Admin Moderation
 - Admin moderation UI loads pending listings from the backend.
 - Admin approve/reject actions use the moderation API.
+- Admin listing management and user-status controls are available through the protected admin routes.
 - The connected workflow remains pending owner verification.
 
 ### Route Protection
@@ -100,28 +105,28 @@ Use the values supplied by the project team. Do not commit secrets or private cr
 ## Current Implementation Notes
 
 - Auth and seller listing flows use the backend API and JWT sessions.
-- OTP delivery uses SMTP when configured and a development fallback when delivery is unavailable.
-- Reservation, handover, and admin moderation screens still need connected workflow verification.
+- OTP delivery uses SMTP when configured and prints a four-digit development fallback when delivery is unavailable.
+- Reservation, expiry, notification, privacy, and handover screens use the backend APIs and have passed the connected evaluator workflow.
+- Admin moderation is API-connected and the owner has verified approval and rejection behavior.
 - Frontend route checks do not replace backend authorization.
 - API connectivity and persistent database behavior require owner verification before deployment.
 
-## Frontend Contribution : Contributor: Namita Gupta
+## Integration Contribution
 
-My contribution to Saanjha focused on frontend development, including:
+M's final integration work connected the frontend to the backend for:
 
-- Building the main UI and navigation.
-- Implementing registration, login, demo OTP verification, and logout flows.
-- Developing listing creation and browsing, search, filters, and sorting.
-- Implementing reservation and confirmation pages.
-- Developing My Profile, My Listings, and My Reservations pages.
-- Adding listing moderation UI and selected protected routes.
-- Testing key user flows and responsive layouts.
-- Committing and submitting frontend changes through a GitHub Pull Request.
+- Reservation creation and cancellation.
+- Reservation status, expiry refresh, and notification loading.
+- Seller active-reservation lookup and handover confirmation.
+- Authentication and listing API integration already present in the shared frontend.
 
 ## Future Improvements
 
-- Connect reservation, expiry, cancellation, notification, and handover screens to the backend.
-- Connect the admin moderation screen to the moderation API.
+- The complete reservation, cancellation, expiry, notification, and handover journey passed manual verification.
+- Participant-only pickup/contact visibility passed manual verification on 14 November 2026.
+- The temporary five-minute reservation option passed expiry and notification verification.
+- Verify real Cloudinary uploads and fallback behavior.
+- Run and record the reservation concurrency experiment with live test credentials.
 - Add robust loading, empty, and error states.
 - Add automated frontend tests and end-to-end testing with the integrated backend.
 

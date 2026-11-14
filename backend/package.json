@@ -2,6 +2,7 @@
   "name": "saanjha-backend",
   "version": "1.0.0",
   "main": "index.js",
+  "description": "Express and MongoDB API for the Saanjha campus reuse platform",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
@@ -11,7 +12,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.11.0",

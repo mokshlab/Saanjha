@@ -184,7 +184,7 @@ Price, pickup-point, and book-detail edit behavior is currently flexible and sho
 5. CURRENT IMPLEMENTED STATUS [CURRENT]
 ----------------------------------------------------------------
 
-The current code is a merged evaluator build. It implements the backend reservation lifecycle and connects the first student authentication and seller listing flows, but it is not yet the complete product described above.
+The current code is a merged evaluator build. It implements authentication, listing, moderation, reservation, notification, and handover flows, but it is not yet the complete product described above.
 
 ### Backend currently implemented
 
@@ -193,12 +193,13 @@ The current code is a merged evaluator build. It implements the backend reservat
 - Development MongoDB Memory Server fallback.
 - Student and admin roles.
 - Password hashing with bcrypt.
+- New registration passwords require at least 8 characters, one letter, and one number.
 - JWT token generation and authentication middleware.
 - Campus email validation during student registration.
 - Optional student ID.
 - Student password login followed by OTP verification.
 - Direct admin email/password login for evaluator demonstration.
-- OTP generation using cryptographic random values.
+- Four-digit OTP generation using cryptographically secure random values.
 - OTP hashing, expiry, email delivery configuration, and development fallback.
 - Automatic first-admin seeding from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 - Listing schema with title, description, price, category, condition, seller, images, pickup point, book details, status, approval, tags, and timestamps.
@@ -210,14 +211,19 @@ The current code is a merged evaluator build. It implements the backend reservat
 - Student-owned listing retrieval endpoint.
 - Admin pending-listing retrieval.
 - Admin approve/reject listing endpoints.
+- Admin all-listings retrieval and deletion endpoints.
 - Admin user listing and active-status toggle.
 - Upload validation through Multer.
 - Listing edit approval rules for sensitive fields.
 - Optional Cloudinary image storage with a local fallback.
+- Seller deletion protection for reserved or sold listings.
+- Contact message model, route, and frontend page.
 - Reservation and ItemJourney models.
 - Atomic first-come-first-served reservation with one active reservation per buyer.
 - Preset duration validation with a 54-hour default.
 - Expiry release, cancellation, stored notifications, four-digit handover confirmation, and item journey events.
+- Participant-only pickup/contact responses and buyer/seller reservation activity views.
+- Temporary five-minute reservation duration for manual expiry testing.
 - Focused backend workflow tests and a reservation concurrency experiment runner.
 
 ### Frontend currently implemented
@@ -227,13 +233,14 @@ The current code is a merged evaluator build. It implements the backend reservat
 - Approved-listing browsing screen.
 - Client-side listing search filtering.
 - Backend-connected student registration, login, OTP verification, JWT session, and logout flow.
+- Frontend password requirements and four-digit OTP input with development terminal fallback.
 - Backend-connected listing submission with two-image validation and zero-price support.
 - Backend-backed My Listings retrieval and seller editing.
 - API proxy to backend port 3101.
 - Frontend development port 5174.
 - Clear placeholder messaging when the backend is unavailable.
 
-The frontend reservation and handover screens remain incomplete integrations. Admin moderation is API-connected but requires owner workflow verification.
+The frontend reservation, activity, and handover screens are connected to the backend APIs but require owner workflow verification. Admin moderation is API-connected but requires owner workflow verification. Password policy and four-digit OTP changes are implemented and covered by focused backend tests.
 
 ### Working page plan [PLANNED]
 
@@ -250,7 +257,7 @@ The practical target is 9 core pages/views plus 1 optional view. A page may be a
 9. Admin Moderation - pending listings, approval/rejection, reports, and user controls.
 10. Wanted Board - optional; add only after the core nine are reliable.
 
-Browse Listings, authentication, listing submission, and My Listings have working implementation surfaces. Reservation, handover, and admin moderation views remain in progress and must not be presented as fully connected workflows.
+Browse Listings, authentication, listing submission, My Listings, contact messaging, and admin moderation have working implementation surfaces. Reservation and handover views are connected to the backend but require final owner workflow verification before they are presented as fully complete.
 
 ### Current default administrator
 
@@ -267,20 +274,29 @@ The real development value belongs only in the ignored local team context and `.
 6. NOT YET IMPLEMENTED [PLANNED]
 ----------------------------------------------------------------
 
-These are the next product modules, not current features:
+The mid-term phase is complete. These are the remaining final-phase product tasks, ordered by evaluation and project necessity:
 
-1. Connect the frontend reservation and handover views to the reservation API.
-2. Verify the connected admin moderation workflow with the owning teammate.
-3. Video upload with 80 MB and 90-second validation.
-4. Contact and exact pickup-point visibility after reservation.
-5. User reports and admin review flow.
-6. Wanted Board and matching notifications.
-7. Campus-word search normalization and synonym behavior.
-8. Search-quality experiment scripts.
-9. Automated frontend tests and full end-to-end testing.
-10. Deployment, CI, accessibility audit, and performance hardening.
+1. Verify real Cloudinary upload, local fallback, accepted limits, and failure cleanup.
+2. Run and record reservation concurrency evidence.
+3. Prepare final deployment configuration, persistent database verification, clean demo data, and evaluation evidence.
+
+Video upload is deliberately deferred and should be implemented only if the final evaluation rubric requires it. Wanted Board, search experiments, visual redesign, and bundle optimization remain deferred.
 
 Do not describe these features as working in a synopsis or presentation until they are implemented and tested.
+
+----------------------------------------------------------------
+6A. FINAL-PHASE M IMPLEMENTATION ORDER
+----------------------------------------------------------------
+
+M owns the backend contracts and data behavior. N or H may be needed for connected interface work and real workflow evidence.
+
+1. Verify Cloudinary with real non-committed credentials and preserve the local development fallback.
+2. Run the concurrency experiment and record truthful raw results.
+3. Freeze the feature scope and prepare the final environment and demo evidence.
+
+Reports and admin review are intentionally deferred for the current final phase.
+
+Do not begin video upload, Wanted Board, search experiments, broad refactoring, accessibility polish, or bundle optimization until the P0 and P1 items above are complete or explicitly removed from the final rubric.
 
 ----------------------------------------------------------------
 7. TARGET ARCHITECTURE
@@ -356,6 +372,8 @@ Reservation and ItemJourney must be designed separately. A listing status field 
 - No online payment dependency.
 
 MUI is a possible UI component layer for the full application. The current shell intentionally uses a small custom CSS system to avoid unnecessary dependencies before the complete screens are designed.
+
+New student registrations require an 8-character password containing at least one letter and one number. Student sign-in uses a four-digit OTP; development fallback codes are printed only when the environment is not production.
 
 ----------------------------------------------------------------
 9. EXPLORATORY EXPERIMENTS
@@ -477,4 +495,19 @@ The Wanted Board is the first feature to reduce if the reservation journey or ex
 - Do not invent experiment results or user research.
 - Keep academic documents simple, human, and honest.
 - Validate frontend build, frontend lint, backend syntax, and relevant behavior after edits.
+
+----------------------------------------------------------------
+14. M CONTRIBUTION RECORD
+----------------------------------------------------------------
+
+The current local implementation contains the following implementation work completed by M across backend/data and connected workflow integration:
+
+- Authentication: campus email validation, password policy, four-digit OTP generation and hashing, OTP expiry, terminal fallback, JWT sessions, duplicate handling, invalid-payload handling, OTP attempt limits, login/registration/OTP rate limiting, and production secret validation.
+- Listings and media: authenticated listing creation/editing, two-image and price validation, safe JSON parsing, Multer validation, local media fallback, optional Cloudinary storage, sensitive-edit approval rules, protected seller deletion, and admin listing state management.
+- Reservations: Reservation and ItemJourney models, active-reservation indexes, atomic first-come-first-served reservation, MongoDB transactions, cancellation, expiry release, notifications, hashed handover codes, seller handover confirmation, and sold-state updates.
+- Connected workflow: frontend reservation creation and cancellation, My Reservations status/notification refresh and lifecycle activity, seller handover controls with buyer contact display and activity in My Listings, reservation confirmation, and participant-only pickup/contact visibility.
+- Manual verification: public pickup privacy, reservation creation, buyer access, seller access, seller activity history, cancellation privacy, five-minute expiry, handover, unauthorized access, admin approval, and admin rejection passed on 14 November 2026. Seller activity now displays the selected duration and reserved-until time.
+- Verification: HTTP route integration tests, transaction rollback tests, privacy/activity tests, backend syntax checks, frontend lint/build checks, and project status/documentation updates.
+
+The earlier M contribution is merged in `origin/main` and `origin/moksh`; the latest privacy/activity implementation is local and staged for the next push. Automated checks currently pass, but the complete evaluator journey, privacy/activity screens, and real Cloudinary upload still require human verification.
 ================================================================

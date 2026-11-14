@@ -33,7 +33,8 @@ The current build includes:
 
 - React/Vite frontend with responsive Saanjha design
 - Express/Mongoose backend with MongoDB Atlas or local memory fallback
-- Student and admin authentication with JWT, bcrypt, and OTP
+- Student and admin authentication with JWT, bcrypt, and four-digit OTP
+- New registrations require passwords with at least 8 characters, one letter, and one number
 - Backend-connected listing submission with at least two images and free-item support
 - Seller-owned My Listings retrieval and editing
 - Listing approval rules for sensitive edits
@@ -46,50 +47,73 @@ The current build includes:
 - Item journey history, focused backend tests, and a concurrency experiment runner
 - Optional Cloudinary media storage with local development fallback
 
-The frontend reservation and handover views still need complete end-to-end verification. Do not describe the full evaluator journey as complete until expiry, notification, and handover are tested through the real application.
+## M Contribution Summary
+
+The merged implementation includes substantial work completed by **M** across the backend, data layer, and connected user workflows:
+
+- Campus authentication, password validation, four-digit OTP verification, JWT sessions, OTP fallback logging, duplicate validation, OTP attempt limits, rate limiting, and production secret checks.
+- Listing creation/edit validation, two-image enforcement, free-item support, Multer uploads, optional Cloudinary storage with local fallback, edit approval rules, admin listing transitions, and protected deletion.
+- Reservation and ItemJourney models, one-active-reservation enforcement, MongoDB transactions, cancellation, expiry, notifications, hashed handover codes, seller confirmation, and sold-state transitions.
+- Frontend-connected reservation creation, cancellation, reservation history, lifecycle activity, expiry notifications, seller handover controls, and participant-only pickup/contact visibility.
+- HTTP integration tests, rollback tests, privacy/activity tests, backend validation, frontend lint/build validation, and final-phase project documentation.
+
+The merged branch contains the authentication, listing, reservation, transaction, notification, and handover work. The latest privacy, activity, and presentation improvements are complete locally and staged for the next push. The remaining browser gap is expiry-notification visibility.
+
+The frontend reservation and handover views are now connected to the backend APIs. Do not describe the full evaluator journey as complete until expiry, notification, and handover are tested through the real application.
 
 ## Final Evaluation Guide
 
 ### Current verified results
 
-The owner has manually verified:
+The owner manually verified the following on 14 November 2026:
 
-1. Registration with the configured campus email domain.
-2. OTP reading from the backend terminal fallback.
-3. OTP verification, login, and logout.
-4. Listing submission with two images and price `0`.
-5. Listing visibility under **My Listings**.
-6. Sensitive listing edits returning to pending approval.
-7. Admin approval.
-8. Desktop and mobile layouts.
-9. Reservation and cancellation.
+1. Public pickup privacy - **PASS**.
+2. Reservation creation - **PASS**.
+3. Buyer access after reservation - **PASS**.
+4. Seller access after reservation - **PASS**.
+5. Seller activity history - **PASS**.
+6. Cancellation privacy - **PASS**.
+7. Five-minute expiry and listing release - **PASS**.
+8. Buyer expiry notification visibility - **PASS**.
+9. Handover completion - **PASS**.
+10. Unauthorized access protection - **PASS**.
+11. Admin approval makes a listing publicly discoverable - **PASS**.
+12. Admin rejection keeps a listing unavailable publicly - **PASS**.
 
-### Still pending before final evaluation
+Earlier manual checks also passed for registration, terminal OTP fallback, OTP login/logout, two-image listing submission with price `0`, My Listings visibility, sensitive edit approval, and responsive desktop/mobile layouts.
 
-Verify these in the real application:
+### Remaining before final delivery
 
-- Reservation expiry releases the listing.
-- The buyer receives or can see the expiry/cancellation notification.
-- The handover code works for the seller.
-- Successful handover changes the listing to sold and records the item journey.
-- The complete reservation and handover screens work through the frontend, not only through API tests.
+- Real Cloudinary upload and local fallback verification.
+- Reservation concurrency evidence.
+- Deployment, environment, database, media, and demo evidence.
+
+## Final-Phase Development Priorities
+
+The mid-term phase is complete. The remaining work is focused on final evaluator features, in this order:
+
+1. Verify the real Cloudinary upload and local fallback behavior.
+2. Run and record the reservation concurrency experiment.
+3. Prepare deployment, environment, database, media, and demo evidence.
+
+Video upload is deferred and should be added only if the final evaluation rubric requires it. Wanted Board, search experiments, visual redesign, and bundle optimization are not current final-phase priorities.
 
 ### Simple final test workflow
 
 1. Start the backend with `cd backend` and `npm run dev`.
 2. Start the frontend in a second terminal with `cd frontend` and `npm run dev`.
-3. Register with an allowed campus email and read the OTP from the backend terminal.
+3. Register with an allowed campus email, use an 8+ character password with a letter and number, and read the four-digit OTP from the backend terminal.
 4. Log in, submit a listing with two images and price `0`, and confirm it appears in **My Listings**.
 5. Edit a sensitive field and confirm the listing becomes pending again.
 6. Log in as admin and approve the listing.
 7. Use a second student account to reserve the listing.
-8. Confirm the reservation duration, contact/pickup visibility, and cancellation behavior.
-9. Run a short expiry test and confirm the listing becomes available again with a notification.
+8. Confirm the reservation duration, cancellation behavior, lifecycle activity, and participant-only pickup/contact visibility.
+9. Select the temporary **5 minutes** option, wait for expiry, and confirm the listing becomes available again with a notification. **PASS**.
 10. Reserve again, complete the handover using the code, and confirm the listing becomes sold.
 11. Run backend checks with `cd backend` and `npm test`.
 12. Run the frontend production check with `cd frontend` and `npm run build`.
 
-Record each result as **PASS**, **FAIL**, or **BLOCKED**. Only the complete path through step 10 should be presented as fully complete.
+Record each result as **PASS**, **FAIL**, or **BLOCKED**. The complete path through step 10 has been manually recorded as **PASS**.
 
 ## Scope
 
@@ -107,7 +131,7 @@ cd ../frontend
 npm install
 ```
 
-Create `.local/.env` with the campus configuration, a unique `JWT_SECRET`, database settings, and optional SMTP or Cloudinary values. Keep real credentials in `.local/.env`; never commit them.
+Copy `.env.example` to `.local/.env`, then set the campus configuration, a unique `JWT_SECRET`, database settings, and optional SMTP or Cloudinary values. Keep real credentials in `.local/.env`; never commit them.
 
 Start the backend:
 
@@ -124,6 +148,8 @@ npm run dev
 ```
 
 Open `http://localhost:5174`. The frontend proxies API requests to `http://127.0.0.1:3101`.
+
+When SMTP is unavailable in development, the backend prints the four-digit OTP in the backend terminal. Do not rely on terminal OTP logging in production.
 
 ## Documentation
 
