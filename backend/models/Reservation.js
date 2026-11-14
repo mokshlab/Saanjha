@@ -8,6 +8,7 @@ const reservationSchema = new mongoose.Schema({
   buyer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   durationHours: { type: Number, enum: durationOptions, default: 54 },
+  durationMinutes: { type: Number, enum: [5] },
   status: { type: String, enum: ['active', 'expired', 'cancelled', 'completed'], default: 'active' },
   reservedAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, required: true },

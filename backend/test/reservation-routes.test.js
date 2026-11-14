@@ -118,6 +118,98 @@ test('reservation routes create, list, and reject unauthenticated access', async
   assert.equal(String(mine.body.reservations[0].listing._id), String(listing._id));
 });
 
+test('reservation supports the temporary five-minute expiry option', async () => {
+  const listing = await createApprovedListing();
+  const before = Date.now();
+  const created = await request(`/reservations/${listing._id}`, {
+    method: 'POST',
+    token: buyerToken,
+    body: { durationMinutes: 5 },
+  });
+
+  assert.equal(created.status, 201);
+  assert.equal(created.body.reservation.durationMinutes, 5);
+  assert.equal(created.body.reservation.durationHours, null);
+  const expiryDelta = new Date(created.body.reservation.expiresAt).getTime() - before;
+  assert.ok(expiryDelta >= 4 * 60 * 1000);
+  assert.ok(expiryDelta <= 6 * 60 * 1000);
+});
+
+test('reservation rejects malformed temporary duration values', async () => {
+  const listing = await createApprovedListing();
+  const created = await request(`/reservations/${listing._id}`, {
+    method: 'POST',
+    token: buyerToken,
+    body: { durationMinutes: 'not-a-number', durationHours: 3 },
+  });
+
+  assert.equal(created.status, 400);
+  assert.match(created.body.message, /valid reservation duration/);
+});
+
+test('public listings hide exact pickup while active participants see contact details', async () => {
+  const listing = await createApprovedListing({ pickupPoint: 'Private library room 4' });
+
+  const publicList = await request('/listings');
+  assert.equal(publicList.status, 200);
+  assert.equal(publicList.body.items[0].pickupPoint, 'Campus pickup');
+
+  const publicDetail = await request(`/listings/${listing._id}`);
+  assert.equal(publicDetail.status, 200);
+  assert.equal(publicDetail.body.item.pickupPoint, 'Campus pickup');
+
+  const created = await request(`/reservations/${listing._id}`, {
+    method: 'POST',
+    token: buyerToken,
+    body: { durationHours: 3 },
+  });
+  assert.equal(created.status, 201);
+
+  const buyerActivity = await request('/reservations/mine', { token: buyerToken });
+  const activeBuyerReservation = buyerActivity.body.reservations[0];
+  assert.equal(activeBuyerReservation.listing.pickupPoint, 'Private library room 4');
+  assert.equal(activeBuyerReservation.seller.email, seller.email);
+
+  const sellerActivity = await request('/reservations/seller/activity', {
+    token: sellerToken,
+  });
+  const activeSellerReservation = sellerActivity.body.reservations[0];
+  assert.equal(activeSellerReservation.listing.pickupPoint, 'Private library room 4');
+  assert.equal(activeSellerReservation.buyer.email, buyer.email);
+});
+
+test('reservation activity hides participant contact after cancellation', async () => {
+  const listing = await createApprovedListing({ pickupPoint: 'Private library room 4' });
+  const created = await request(`/reservations/${listing._id}`, {
+    method: 'POST',
+    token: buyerToken,
+    body: { durationHours: 3 },
+  });
+
+  const cancelled = await request(
+    `/reservations/${created.body.reservation._id}/cancel`,
+    { method: 'POST', token: buyerToken }
+  );
+  assert.equal(cancelled.status, 200);
+
+  const buyerActivity = await request('/reservations/mine', { token: buyerToken });
+  const buyerReservation = buyerActivity.body.reservations[0];
+  assert.equal(buyerReservation.listing.pickupPoint, 'Campus pickup');
+  assert.equal(buyerReservation.seller.email, undefined);
+  assert.deepEqual(
+    buyerReservation.journey.map((event) => event.event),
+    ['reserved', 'cancelled']
+  );
+
+  const sellerActivity = await request('/reservations/seller/activity', {
+    token: sellerToken,
+  });
+  const sellerReservation = sellerActivity.body.reservations[0];
+  assert.equal(sellerReservation.listing.pickupPoint, 'Campus pickup');
+  assert.equal(sellerReservation.buyer.email, undefined);
+  assert.equal(sellerReservation.status, 'cancelled');
+});
+
 test('reservation routes cancel and notify the other participant', async () => {
   const listing = await createApprovedListing();
   const created = await request(`/reservations/${listing._id}`, {

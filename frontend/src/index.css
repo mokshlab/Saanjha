@@ -2698,6 +2698,142 @@ body {
   line-height: 1.6;
 }
 
+.reservation-summary-grid,
+.reservation-meetup-grid,
+.confirmation-meetup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.reservation-summary-grid > div,
+.reservation-meetup-grid > div,
+.confirmation-meetup-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.reservation-summary-grid span,
+.reservation-meetup-grid span,
+.confirmation-meetup-grid span {
+  color: #718074;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.reservation-summary-grid strong,
+.reservation-meetup-grid strong,
+.confirmation-meetup-grid strong,
+.reservation-meetup-grid a,
+.confirmation-meetup-grid a {
+  overflow-wrap: anywhere;
+  color: #344d3b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reservation-meetup {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #e3e9df;
+  border-radius: 14px;
+  background: #f8faf6;
+}
+
+.reservation-meetup-active {
+  border-color: #c8d8c7;
+  background: #f1f7ee;
+}
+
+.reservation-section-heading,
+.confirmation-meetup-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.reservation-section-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  background: #dce8d5;
+  color: #42694b;
+  font-size: 20px;
+}
+
+.reservation-section-heading h3,
+.reservation-activity h3,
+.confirmation-meetup h2 {
+  margin: 0;
+  color: #344d3b;
+  font-size: 17px;
+}
+
+.reservation-section-heading p,
+.confirmation-meetup > p {
+  margin: 4px 0 0;
+  color: #68756a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reservation-activity {
+  margin-top: 20px;
+}
+
+.reservation-activity ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reservation-activity li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf0e9;
+  color: #526e4e;
+  font-size: 13px;
+}
+
+.reservation-activity time {
+  color: #718074;
+  text-align: right;
+}
+
+.confirmation-meetup {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid #c8d8c7;
+  border-radius: 16px;
+  background: #f1f7ee;
+}
+
+.confirmation-meetup .reservation-eyebrow {
+  margin: 0 0 5px;
+  text-align: left;
+}
+
+.confirmation-meetup-grid {
+  margin-top: 18px;
+}
+
+.confirmation-meetup-grid a {
+  color: #42694b;
+  text-decoration: underline;
+}
+
 .my-reservation-status {
   color: #526e4e;
   font-weight: 700;
@@ -2735,6 +2871,21 @@ body {
   .my-reservation-icon {
     width: 60px;
     height: 60px;
+  }
+
+  .reservation-summary-grid,
+  .reservation-meetup-grid,
+  .confirmation-meetup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-activity li {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reservation-activity time {
+    text-align: left;
   }
 }
 

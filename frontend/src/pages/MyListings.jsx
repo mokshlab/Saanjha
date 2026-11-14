@@ -17,6 +17,7 @@ const categories = [
 function MyListings() {
   const [listings, setListings] = useState([]);
   const [activeReservations, setActiveReservations] = useState([]);
+  const [reservationActivity, setReservationActivity] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     title: '',
@@ -30,6 +31,12 @@ function MyListings() {
   const [handoverMessages, setHandoverMessages] = useState({});
   const [handoverSubmitting, setHandoverSubmitting] = useState({});
 
+  function getReservationDuration(reservation) {
+    if (reservation.durationMinutes) return `${reservation.durationMinutes} minutes`;
+    if (reservation.durationHours) return `${reservation.durationHours} hours`;
+    return 'Default duration';
+  }
+
   async function refreshMyListings() {
     if (!isAuthenticated()) {
       setListings([]);
@@ -37,12 +44,14 @@ function MyListings() {
     }
 
     try {
-      const [listingResponse, reservationResponse] = await Promise.all([
+      const [listingResponse, reservationResponse, activityResponse] = await Promise.all([
         api.get('/listings/me/listings'),
         api.get('/reservations/seller/active'),
+        api.get('/reservations/seller/activity'),
       ]);
       setListings(listingResponse.data.listings || []);
       setActiveReservations(reservationResponse.data.reservations || []);
+      setReservationActivity(activityResponse.data.reservations || []);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Could not load your listings.');
     }
@@ -255,6 +264,11 @@ function MyListings() {
                 <p style={{ margin: '6px 0 0' }}>
                   Buyer: {reservation.buyer?.name || reservation.buyer?.email || 'Student'}
                 </p>
+                {reservation.buyer?.email && (
+                  <p style={{ margin: '6px 0 0' }}>
+                    Buyer contact: {reservation.buyer.email}
+                  </p>
+                )}
               </div>
               <label>
                 Handover code
@@ -289,6 +303,58 @@ function MyListings() {
                 </p>
               )}
             </div>
+          ))}
+        </section>
+      )}
+
+      {reservationActivity.length > 0 && (
+        <section
+          aria-labelledby="reservation-activity-title"
+          style={{
+            margin: '28px 0',
+            padding: '22px',
+            border: '1px solid #d8e2d5',
+            borderRadius: '14px',
+            background: '#fff',
+          }}
+        >
+          <h2 id="reservation-activity-title">Reservation activity</h2>
+          {reservationActivity.map((reservation) => (
+            <article
+              key={reservation._id}
+              style={{
+                padding: '14px 0',
+                borderTop: '1px solid #d8e2d5',
+              }}
+            >
+              <strong>{reservation.listing?.title || 'Reserved item'}</strong>
+              <p style={{ margin: '6px 0' }}>
+                Buyer: {reservation.buyer?.name || reservation.buyer?.email || 'Student'}
+              </p>
+              <p style={{ margin: '6px 0' }}>
+                Status: {reservation.status}
+                {reservation.createdAt
+                  ? ` · ${new Date(reservation.createdAt).toLocaleString()}`
+                  : ''}
+              </p>
+              <p style={{ margin: '6px 0' }}>
+                Reserved for: {getReservationDuration(reservation)}
+              </p>
+              {reservation.expiresAt && (
+                <p style={{ margin: '6px 0' }}>
+                  Reserved until: {new Date(reservation.expiresAt).toLocaleString()}
+                </p>
+              )}
+              {reservation.journey?.length > 0 && (
+                <ul>
+                  {reservation.journey.map((event) => (
+                    <li key={event._id}>
+                      {event.event} · {new Date(event.createdAt).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
           ))}
         </section>
       )}

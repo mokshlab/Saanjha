@@ -10,6 +10,47 @@ const { auth, studentAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const durationOptions = [3, 6, 12, 24, 36, 54, 72, 96];
+const testDurationMinutes = 5;
+
+function reservationView(reservation, journeys = [], viewerId) {
+  const value = reservation.toObject ? reservation.toObject() : { ...reservation };
+  const active = value.status === 'active';
+  const listing = value.listing && typeof value.listing === 'object'
+    ? { ...value.listing }
+    : value.listing;
+
+  if (listing && typeof listing === 'object') {
+    if (!active) listing.pickupPoint = 'Campus pickup';
+    value.listing = listing;
+  }
+
+  if (!active && viewerId) {
+    const viewerIsBuyer = String(value.buyer?._id || value.buyer) === String(viewerId);
+    if (viewerIsBuyer && value.seller && typeof value.seller === 'object') {
+      delete value.seller.email;
+    }
+    if (!viewerIsBuyer && value.buyer && typeof value.buyer === 'object') {
+      delete value.buyer.email;
+    }
+  }
+
+  value.journey = journeys
+    .filter((journey) => String(journey.reservation) === String(value._id))
+    .map((journey) => (journey.toObject ? journey.toObject() : journey));
+  return value;
+}
+
+async function loadReservationViews(query) {
+  const reservations = await Reservation.find(query)
+    .populate('listing', 'title status reservedUntil price pickupPoint category description images')
+    .populate('seller', 'name email college')
+    .populate('buyer', 'name email college')
+    .sort({ createdAt: -1 });
+  const journeys = await ItemJourney.find({
+    reservation: { $in: reservations.map((reservation) => reservation._id) }
+  }).sort({ createdAt: 1 });
+  return reservations.map((reservation) => reservationView(reservation, journeys, query.buyer || query.seller));
+}
 
 async function withTransaction(work) {
   const session = await mongoose.startSession();
@@ -60,9 +101,7 @@ async function expireReservations() {
 
 router.get('/mine', auth, studentAuth, async (req, res) => {
   await expireReservations();
-  const reservations = await Reservation.find({ buyer: req.user._id })
-    .populate('listing', 'title status reservedUntil price pickupPoint category description images')
-    .sort({ createdAt: -1 });
+  const reservations = await loadReservationViews({ buyer: req.user._id });
   res.json({ reservations });
 });
 
@@ -84,14 +123,31 @@ router.get('/seller/active', auth, studentAuth, async (req, res) => {
   res.json({ reservations });
 });
 
+router.get('/seller/activity', auth, studentAuth, async (req, res) => {
+  await expireReservations();
+  const reservations = await loadReservationViews({ seller: req.user._id });
+  res.json({ reservations });
+});
+
 router.post('/:listingId', auth, studentAuth, async (req, res) => {
   await expireReservations();
+  const hasDurationMinutes = req.body.durationMinutes !== undefined &&
+    req.body.durationMinutes !== null &&
+    req.body.durationMinutes !== '';
+  const durationMinutes = hasDurationMinutes ? Number(req.body.durationMinutes) : 0;
   const durationHours = Number(req.body.durationHours || 54);
-  if (!durationOptions.includes(durationHours)) {
+  const isTestDuration = durationMinutes === testDurationMinutes;
+  if ((hasDurationMinutes && !Number.isFinite(durationMinutes)) ||
+    (!isTestDuration && !durationOptions.includes(durationHours)) ||
+    (hasDurationMinutes && !isTestDuration)) {
     return res.status(400).json({ message: 'Choose a valid reservation duration' });
   }
 
-  const expiresAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + (
+    isTestDuration
+      ? testDurationMinutes * 60 * 1000
+      : durationHours * 60 * 60 * 1000
+  ));
   const handoverCode = crypto.randomInt(1000, 10000).toString();
   const handoverCodeHash = await bcrypt.hash(handoverCode, 10);
 
@@ -113,7 +169,8 @@ router.post('/:listingId', auth, studentAuth, async (req, res) => {
         listing: reservedListing._id,
         buyer: req.user._id,
         seller: reservedListing.seller,
-        durationHours,
+        durationHours: isTestDuration ? null : durationHours,
+        durationMinutes: isTestDuration ? testDurationMinutes : undefined,
         expiresAt,
         handoverCodeHash
       }], { session });
@@ -127,7 +184,14 @@ router.post('/:listingId', auth, studentAuth, async (req, res) => {
       return createdReservation;
     });
     reservation = result;
-    res.status(201).json({ message: 'Listing reserved', handoverCode, reservation });
+    const populatedReservation = await Reservation.findById(reservation._id)
+      .populate('listing', 'title status reservedUntil price pickupPoint category description images')
+      .populate('seller', 'name email college');
+    res.status(201).json({
+      message: 'Listing reserved',
+      handoverCode,
+      reservation: reservationView(populatedReservation)
+    });
   } catch (error) {
     if (error.code === 11000) return res.status(409).json({ message: 'You already have an active reservation' });
     if (error.statusCode) return res.status(error.statusCode).json({ message: error.message });

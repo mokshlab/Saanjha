@@ -8,6 +8,15 @@ const { storeListingImages } = require('../services/media');
 
 const router = express.Router();
 
+function publicListingView(listing) {
+  const item = listing.toObject ? listing.toObject() : { ...listing };
+  item.pickupPoint = 'Campus pickup';
+  if (item.seller && typeof item.seller === 'object') {
+    delete item.seller.email;
+  }
+  return item;
+}
+
 router.get('/', async (req, res) => {
   const { search, category, condition, page = 1, limit = 12 } = req.query;
   const query = { status: 'approved' };
@@ -16,7 +25,12 @@ router.get('/', async (req, res) => {
   if (condition) query.condition = condition;
   const items = await Listing.find(query).populate('seller', 'name college').sort({ createdAt: -1 }).limit(Number(limit)).skip((Number(page) - 1) * Number(limit));
   const totalItems = await Listing.countDocuments(query);
-  res.json({ items, totalItems, currentPage: Number(page), totalPages: Math.ceil(totalItems / Number(limit)) });
+  res.json({
+    items: items.map(publicListingView),
+    totalItems,
+    currentPage: Number(page),
+    totalPages: Math.ceil(totalItems / Number(limit))
+  });
 });
 
 router.get('/me/listings', auth, studentAuth, async (req, res) => {
@@ -41,7 +55,7 @@ router.get('/admin/all', auth, adminAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const item = await Listing.findOne({ _id: req.params.id, status: { $in: ['approved', 'reserved'] } }).populate('seller', 'name college');
   if (!item) return res.status(404).json({ message: 'Listing not found' });
-  res.json({ item });
+  res.json({ item: publicListingView(item) });
 });
 
 router.post('/', auth, studentAuth, uploadMultiple('images', 50), async (req, res) => {
