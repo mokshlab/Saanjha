@@ -88,7 +88,16 @@ async function sendOtpEmail(to, code) {
     console.log(`[Saanjha OTP] ${to}: ${code}`);
   }
 
-  const fromCandidate = process.env.OTP_FROM || process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@saanjha.local';
+  const isBrevo = (process.env.SMTP_HOST || '').toLowerCase().includes('brevo');
+  const configuredFrom = process.env.OTP_FROM || process.env.SMTP_FROM;
+  if (isBrevo && !configuredFrom) {
+    const error = 'Brevo SMTP requires SMTP_FROM set to a verified sender email';
+    if (process.env.NODE_ENV === 'production') throw new Error(error);
+    console.warn(error);
+    return { success: false, fallbackLogged: true, deliveryError: error };
+  }
+
+  const fromCandidate = configuredFrom || process.env.SMTP_USER || 'no-reply@saanjha.local';
   const from = /</.test(fromCandidate) ? fromCandidate : `Saanjha <${fromCandidate}>`;
   const transport = buildTransport();
 
@@ -101,18 +110,18 @@ async function sendOtpEmail(to, code) {
       throw new Error('Production OTP delivery is unavailable because SMTP is not configured');
     }
     console.log('Configure SMTP to send real emails: set SMTP_SERVICE or SMTP_HOST/SMTP_PORT with SMTP_USER/SMTP_PASS');
-    return { success: true, fallbackLogged: true };
+    return { success: false, fallbackLogged: true };
   }
 
   try {
-    await transport.sendMail({ from, to, subject, text, html });
-    return { success: true };
+    const result = await transport.sendMail({ from, to, subject, text, html });
+    return { success: true, messageId: result.messageId };
   } catch (error) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error(`OTP email delivery failed: ${error.message}`);
     }
     console.warn(`OTP email delivery failed for ${to}: ${error.message}`);
-    return { success: true, fallbackLogged: true, deliveryError: error.message };
+    return { success: false, fallbackLogged: true, deliveryError: error.message };
   }
 }
 
