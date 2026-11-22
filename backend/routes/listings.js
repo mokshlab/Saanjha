@@ -1,12 +1,34 @@
 ﻿const express = require('express');
+const mongoose = require('mongoose');
 const Listing = require('../models/Listing');
 const Reservation = require('../models/Reservation');
 const { auth, studentAuth, adminAuth } = require('../middleware/auth');
-const { uploadMultiple } = require('../middleware/upload');
+const { uploadMultiple, uploadVideo } = require('../middleware/upload');
 const { requiresApprovalChange } = require('../services/listingRules');
-const { storeListingImages } = require('../services/media');
+const {
+  storeListingImages,
+  storeListingVideo,
+  removeLocalFile,
+  removeStoredVideo
+} = require('../services/media');
 
 const router = express.Router();
+
+function publicListingView(listing) {
+  const item = listing.toObject ? listing.toObject() : { ...listing };
+  item.pickupPoint = 'Campus pickup';
+  if (item.seller && typeof item.seller === 'object') {
+    delete item.seller.email;
+  }
+  if (item.video && typeof item.video === 'object') {
+    item.video = {
+      url: item.video.url,
+      durationSeconds: item.video.durationSeconds,
+      format: item.video.format
+    };
+  }
+  return item;
+}
 
 router.get('/', async (req, res) => {
   const { search, category, condition, page = 1, limit = 12 } = req.query;
@@ -16,7 +38,12 @@ router.get('/', async (req, res) => {
   if (condition) query.condition = condition;
   const items = await Listing.find(query).populate('seller', 'name college').sort({ createdAt: -1 }).limit(Number(limit)).skip((Number(page) - 1) * Number(limit));
   const totalItems = await Listing.countDocuments(query);
-  res.json({ items, totalItems, currentPage: Number(page), totalPages: Math.ceil(totalItems / Number(limit)) });
+  res.json({
+    items: items.map(publicListingView),
+    totalItems,
+    currentPage: Number(page),
+    totalPages: Math.ceil(totalItems / Number(limit))
+  });
 });
 
 router.get('/me/listings', auth, studentAuth, async (req, res) => {
@@ -41,7 +68,52 @@ router.get('/admin/all', auth, adminAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const item = await Listing.findOne({ _id: req.params.id, status: { $in: ['approved', 'reserved'] } }).populate('seller', 'name college');
   if (!item) return res.status(404).json({ message: 'Listing not found' });
-  res.json({ item });
+  res.json({ item: publicListingView(item) });
+});
+
+router.post('/:id/video', auth, studentAuth, uploadVideo(), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'A video file is required' });
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    await removeLocalFile(req.file.path);
+    return res.status(400).json({ message: 'Invalid listing id' });
+  }
+
+  const listing = await Listing.findOne({ _id: req.params.id, seller: req.user._id });
+  if (!listing) {
+    await removeLocalFile(req.file.path);
+    return res.status(404).json({ message: 'Listing not found' });
+  }
+  if (['reserved', 'sold'].includes(listing.status)) {
+    await removeLocalFile(req.file.path);
+    return res.status(409).json({ message: 'Reserved or sold listings cannot be edited' });
+  }
+  if (listing.video?.url) {
+    await removeLocalFile(req.file.path);
+    return res.status(409).json({ message: 'This listing already has a video' });
+  }
+
+  let video;
+  try {
+    video = await storeListingVideo(req.file);
+    listing.video = video;
+    if (listing.status === 'approved') {
+      listing.status = 'pending';
+      listing.approvedBy = undefined;
+      listing.approvedAt = undefined;
+      listing.rejectionReason = undefined;
+    }
+    await listing.save();
+    res.status(201).json({ message: 'Video uploaded and submitted for approval', listing });
+  } catch (error) {
+    if (video) {
+      try {
+        await removeStoredVideo(video);
+      } catch (cleanupError) {
+        error.message = `${error.message}; Cloudinary cleanup failed: ${cleanupError.message}`;
+      }
+    }
+    res.status(error.statusCode || 500).json({ message: error.message || 'Video upload failed' });
+  }
 });
 
 router.post('/', auth, studentAuth, uploadMultiple('images', 50), async (req, res) => {

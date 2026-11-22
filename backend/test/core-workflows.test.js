@@ -22,6 +22,32 @@ test('listing requires at least two images', async () => {
   await assert.rejects(listing.validate(), /At least two images are required/);
 });
 
+test('listing video metadata enforces the supported duration and size', async () => {
+  const listing = new Listing({
+    ...listingData,
+    video: {
+      url: 'https://res.cloudinary.com/example/video/upload/sample.mp4',
+      publicId: 'saanjha/listings/sample',
+      durationSeconds: 90,
+      bytes: 80 * 1024 * 1024,
+      format: 'mp4'
+    }
+  });
+  await assert.doesNotReject(listing.validate());
+
+  const invalidVideo = new Listing({
+    ...listingData,
+    video: {
+      url: 'https://res.cloudinary.com/example/video/upload/sample.mp4',
+      publicId: 'saanjha/listings/sample',
+      durationSeconds: 91,
+      bytes: 80 * 1024 * 1024,
+      format: 'mp4'
+    }
+  });
+  await assert.rejects(invalidVideo.validate(), /Path `durationSeconds`/);
+});
+
 test('approval-sensitive listing edits are detected', () => {
   const listing = new Listing(listingData);
   assert.equal(requiresApprovalChange(listing, { description: 'Corrected text' }, false), false);

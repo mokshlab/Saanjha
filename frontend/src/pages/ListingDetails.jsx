@@ -60,6 +60,7 @@ export default function ListingDetails() {
     currentUserEmail === ownerEmail;
 
   const [durationHours, setDurationHours] = useState(54);
+  const [durationMinutes, setDurationMinutes] = useState(null);
   const [alreadyReserved, setAlreadyReserved] = useState(false);
   const [reservationMessage, setReservationMessage] = useState('');
   const [reserving, setReserving] = useState(false);
@@ -97,7 +98,9 @@ export default function ListingDetails() {
     setReservationMessage('');
     try {
       const response = await api.post(`/reservations/${item._id}`, {
-        durationHours,
+        ...(durationMinutes
+          ? { durationMinutes }
+          : { durationHours }),
       });
       const reservation = response.data.reservation;
       setAlreadyReserved(true);
@@ -189,12 +192,18 @@ export default function ListingDetails() {
                 <label>
                   Reservation duration
                   <select
-                    value={durationHours}
-                    onChange={(event) =>
-                      setDurationHours(Number(event.target.value))
-                    }
+                    value={durationMinutes ? '5m' : String(durationHours)}
+                    onChange={(event) => {
+                      if (event.target.value === '5m') {
+                        setDurationMinutes(5);
+                      } else {
+                        setDurationMinutes(null);
+                        setDurationHours(Number(event.target.value));
+                      }
+                    }}
                     disabled={reserving}
                   >
+                    <option value="5m">5 minutes (temporary test)</option>
                     {[3, 6, 12, 24, 36, 54, 72, 96].map((hours) => (
                       <option key={hours} value={hours}>
                         {hours} hours

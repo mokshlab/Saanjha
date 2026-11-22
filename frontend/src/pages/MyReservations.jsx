@@ -12,6 +12,12 @@ function getStatusLabel(status) {
   }[status] || status;
 }
 
+function getDurationLabel(reservation) {
+  if (reservation.durationMinutes) return `${reservation.durationMinutes} minutes`;
+  if (reservation.durationHours) return `${reservation.durationHours} hours`;
+  return 'Standard duration';
+}
+
 export default function MyReservations() {
   const [reservations, setReservations] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -81,9 +87,10 @@ export default function MyReservations() {
           <section aria-label="Reservation notifications">
             <h2>Notifications</h2>
             {notifications.slice(0, 5).map((notification) => (
-              <p key={notification._id} role="status">
-                {notification.message}
-              </p>
+              <article key={notification._id} role="status">
+                <p>{notification.message}</p>
+                <small>{new Date(notification.createdAt).toLocaleString()}</small>
+              </article>
             ))}
           </section>
         )}
@@ -116,37 +123,85 @@ export default function MyReservations() {
                           ? `₹${listing.price}`
                           : 'Price on request'}
                       </p>
-                      <span>
-                        Pickup: {listing.pickupPoint || 'Campus pickup'}
-                      </span>
                     </div>
                   </div>
 
                   <div className="my-reservation-meta">
-                    <p>
-                      <strong>Reservation ID:</strong> {reservation._id}
-                    </p>
-                    <p>
-                      <strong>Date:</strong>{' '}
-                      {new Date(reservation.createdAt).toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Status:</strong>{' '}
-                      <span
-                        className={
-                          reservation.status === 'cancelled'
-                            ? 'my-reservation-cancelled'
-                            : 'my-reservation-status'
-                        }
-                      >
-                        {getStatusLabel(reservation.status)}
-                      </span>
-                    </p>
-                    {active && (
-                      <p>
-                        <strong>Expires:</strong>{' '}
-                        {new Date(reservation.expiresAt).toLocaleString()}
-                      </p>
+                    <div className="reservation-summary-grid">
+                      <div>
+                        <span>Reservation status</span>
+                        <strong
+                          className={
+                            reservation.status === 'cancelled'
+                              ? 'my-reservation-cancelled'
+                              : 'my-reservation-status'
+                          }
+                        >
+                          {getStatusLabel(reservation.status)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Reserved on</span>
+                        <strong>{new Date(reservation.createdAt).toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span>Reservation ID</span>
+                        <strong>{reservation._id}</strong>
+                      </div>
+                      <div>
+                        <span>Duration</span>
+                        <strong>{getDurationLabel(reservation)}</strong>
+                      </div>
+                    </div>
+                    <section className={`reservation-meetup ${active ? 'reservation-meetup-active' : ''}`}>
+                      <div className="reservation-section-heading">
+                        <span className="reservation-section-icon">⌖</span>
+                        <div>
+                          <h3>Meet-up details</h3>
+                          <p>
+                            {active
+                              ? 'Use these details to coordinate your campus handover.'
+                              : 'Contact and exact pickup details are hidden after this reservation ends.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="reservation-meetup-grid">
+                        <div>
+                          <span>Pickup point</span>
+                          <strong>
+                            {active
+                              ? listing.pickupPoint || 'Campus pickup'
+                              : 'Campus pickup'}
+                          </strong>
+                        </div>
+                        {active && reservation.seller?.email && (
+                          <div>
+                            <span>Seller contact</span>
+                            <a href={`mailto:${reservation.seller.email}`}>
+                              {reservation.seller.email}
+                            </a>
+                          </div>
+                        )}
+                        {active && reservation.expiresAt && (
+                          <div>
+                            <span>Reserved until</span>
+                            <strong>{new Date(reservation.expiresAt).toLocaleString()}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                    {reservation.journey?.length > 0 && (
+                      <div className="reservation-activity">
+                        <h3>Activity</h3>
+                        <ul>
+                          {reservation.journey.map((event) => (
+                            <li key={event._id}>
+                              <span>{getStatusLabel(event.event)}</span>
+                              <time>{new Date(event.createdAt).toLocaleString()}</time>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                     {active && (
                       <button

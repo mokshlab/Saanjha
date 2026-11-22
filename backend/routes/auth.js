@@ -69,10 +69,13 @@ router.post('/register', registrationLimiter, async (req, res) => {
     await user.save();
     const delivery = await sendOtpEmail(user.email, code);
     res.status(201).json({
-      message: 'Student registered. Verification code sent.',
+      message: delivery.success
+        ? 'Student registered. Verification code sent.'
+        : 'Student registered. Verification code generated; email delivery is unavailable.',
       otpRequired: true,
       email: user.email,
       devFallback: !!delivery.fallbackLogged,
+      emailDeliveryError: delivery.success ? undefined : delivery.deliveryError,
       expiresAt
     });
   } catch (error) {
@@ -103,7 +106,14 @@ router.post('/login', loginLimiter, async (req, res) => {
   user.otpAttempts = 0;
   await user.save();
   const delivery = await sendOtpEmail(user.email, code);
-  res.json({ message: 'Verification code sent', otpRequired: true, email: user.email, devFallback: !!delivery.fallbackLogged, expiresAt });
+  res.json({
+    message: delivery.success ? 'Verification code sent' : 'Verification code generated. Email delivery is unavailable.',
+    otpRequired: true,
+    email: user.email,
+    devFallback: !!delivery.fallbackLogged,
+    emailDeliveryError: delivery.success ? undefined : delivery.deliveryError,
+    expiresAt
+  });
 });
 
 router.post('/verify-otp', otpLimiter, async (req, res) => {

@@ -8,18 +8,13 @@ export default function ReservationConfirmation() {
   const { id } = useParams();
   const { state } = useLocation();
 
-  const [savedReservation, setSavedReservation] = useState(null);
-
-  const passedReservation = state?.reservation;
   const passedItem = state?.item;
+  const [savedReservation, setSavedReservation] = useState(null);
+  const [loadingReservation, setLoadingReservation] = useState(true);
 
   useEffect(() => {
-    if (passedReservation) {
-      setSavedReservation(passedReservation);
-      return undefined;
-    }
-
     let active = true;
+    setLoadingReservation(true);
     api.get('/reservations/mine')
       .then((response) => {
         if (!active) return;
@@ -30,28 +25,43 @@ export default function ReservationConfirmation() {
       })
       .catch(() => {
         if (active) setSavedReservation(null);
+      })
+      .finally(() => {
+        if (active) setLoadingReservation(false);
       });
 
     return () => {
       active = false;
     };
-  }, [id, passedReservation]);
+  }, [id]);
 
-  const reservation = savedReservation || passedReservation;
+  const reservation = savedReservation;
 
-  const item =
-    passedItem ||
-    (reservation
-      ? {
-          _id: reservation.listing?._id || id,
-          title: reservation.listing?.title || passedItem?.title,
-          price: reservation.listing?.price ?? passedItem?.price,
-          pickupPoint: reservation.listing?.pickupPoint || passedItem?.pickupPoint,
-          category: reservation.listing?.category || passedItem?.category || 'Other',
-          description: reservation.listing?.description || passedItem?.description || '',
-          images: reservation.listing?.images || passedItem?.images || [],
-        }
-      : null);
+  if (loadingReservation) {
+    return (
+      <>
+        <Navbar />
+        <main className="reservation-page">
+          <div className="reservation-card">
+            <p role="status">Loading reservation details...</p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  const item = reservation
+    ? {
+        ...passedItem,
+        _id: reservation.listing?._id || passedItem?._id || id,
+        title: reservation.listing?.title || passedItem?.title,
+        price: reservation.listing?.price ?? passedItem?.price,
+        pickupPoint: reservation.listing?.pickupPoint || passedItem?.pickupPoint,
+        category: reservation.listing?.category || passedItem?.category || 'Other',
+        description: reservation.listing?.description || passedItem?.description || '',
+        images: reservation.listing?.images || passedItem?.images || [],
+      }
+    : passedItem || null;
 
   if (!item || String(item._id) !== String(id)) {
     return (
@@ -114,11 +124,6 @@ export default function ReservationConfirmation() {
           </div>
 
           <div>
-            <span>Pickup point</span>
-            <strong>{item.pickupPoint || 'Campus pickup'}</strong>
-          </div>
-
-          <div>
             <span>Reservation status</span>
             <strong className="reservation-status">
               {reservation?.status || 'active'}
@@ -131,6 +136,31 @@ export default function ReservationConfirmation() {
             </div>
           )}
         </div>
+
+        <section className="confirmation-meetup">
+          <div className="confirmation-meetup-heading">
+            <span className="reservation-section-icon">⌖</span>
+            <div>
+              <p className="reservation-eyebrow">YOUR MEET-UP DETAILS</p>
+              <h2>Ready for campus handover</h2>
+            </div>
+          </div>
+          <div className="confirmation-meetup-grid">
+            <div>
+              <span>Pickup point</span>
+              <strong>{item.pickupPoint || 'Campus pickup'}</strong>
+            </div>
+            {reservation?.seller?.email && (
+              <div>
+                <span>Seller contact</span>
+                <a href={`mailto:${reservation.seller.email}`}>
+                  {reservation.seller.email}
+                </a>
+              </div>
+            )}
+          </div>
+          <p>Contact the seller before meeting and keep your handover code private.</p>
+        </section>
 
         {reservation?.status === 'active' &&
           (state?.handoverCode || reservation?.handoverCode) && (
